@@ -9,7 +9,6 @@ const main = async (): Promise<void> => {
     prelude()
 
 
-
     const port = argv[0] || (process.env.PORT as string)
     const host = argv[1] || (process.env.HOST as string)
 
