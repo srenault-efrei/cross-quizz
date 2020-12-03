@@ -7,10 +7,10 @@ import User from '@/core/db/models/User'
 
 
 const api = Router()
-  api.get('/:id', async (req: Request, res: Response) => {
-    const { id } = req.params
+  api.get('/:uuid', async (req: Request, res: Response) => {
+    const { uuid } = req.params
     try {
-      const user : User | undefined = await User.findOne(id)
+      const user : User | undefined = await User.findOne(uuid)
   
       if(user){
         res.status(CREATED.status).json(success(user))

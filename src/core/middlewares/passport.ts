@@ -19,7 +19,8 @@ passport.use(
     },
     async (email, password, next) => {
       try {
-        const user = await User.findOne({ email },{ relations: ["rank"] })
+       /* const user = await User.findOne({ email },{ relations: ["rank"] })*/
+        const user = await User.findOne({ email })
 
         if (!user) {
           next(`Sorry email ${email} dosen't exist`, null)
@@ -51,12 +52,12 @@ passport.use(
     },
     async (jwtPayload, next) => {
       try {
-        const { id } = jwtPayload
+        const { uuid } = jwtPayload
 
-        const user = await User.findOne({ where: { id } })
+        const user = await User.findOne({ where: { uuid } })
 
         if (!user) {
-          next(`User ${id} doesn't exist`)
+          next(`User ${uuid} doesn't exist`)
           return
         }
 
