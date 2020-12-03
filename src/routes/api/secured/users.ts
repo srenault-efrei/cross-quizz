@@ -24,11 +24,11 @@ const api = Router()
     }
   })
 
-  api.put('/:id/', async (req: Request, res: Response) => {
+  api.put('/:uuid/', async (req: Request, res: Response) => {
 
     const fields = ['firstname', 'lastname', 'email']
     try {
-      const { id } = req.params
+      const { uuid } = req.params
       
       const missings = fields.filter((field: string) => !req.body[field])
       if (!isEmpty(missings)) {
@@ -37,7 +37,7 @@ const api = Router()
       }
   
       const { firstname, lastname, email } = req.body
-      const user : User | undefined = await User.findOne(id)
+      const user : User | undefined = await User.findOne(uuid)
   
       if (user) {
         if (req.body.password) {
@@ -60,10 +60,10 @@ const api = Router()
     }
   })
 
-  api.delete('/:id', async (req: Request, res: Response) => {
-    const { id } = req.params
+  api.delete('/:uuid', async (req: Request, res: Response) => {
+    const { uuid } = req.params
     try {
-      const user : User | undefined = await User.findOne(id)
+      const user : User | undefined = await User.findOne(uuid)
   
       if(user){
         await user.remove()
