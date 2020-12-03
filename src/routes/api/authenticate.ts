@@ -32,9 +32,8 @@ api.post('/signup', async (req: Request, res: Response) => {
 
     await user.save()
 
-    const payload = { id: user.id, firstname }
+    const payload = { uuid: user.uuid, firstname }
     const token = jwt.sign(payload, process.env.JWT_ENCRYPTION as string)
-
     res.status(CREATED.status).json(success(user, { token }))
   } catch (err) {
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
@@ -51,7 +50,7 @@ api.post('/signin', async (req: Request, res: Response) => {
       return
     }
 
-    const payload = { id: user.id, firstname: user.firstname }
+    const payload = { uuid: user.uuid, firstname: user.firstname }
     const token = jwt.sign(payload, process.env.JWT_ENCRYPTION as string)
 
     res.status(OK.status).json(success(user, { token }))

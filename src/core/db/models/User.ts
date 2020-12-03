@@ -12,14 +12,7 @@ import {Entity,
 
 import bcrypt from 'bcryptjs'
 
-interface JSONUser{
-  id:string,
-  email:string,
-  firstname:string,
-  lastname:string,
-  createdAt:string,
-  updatedAt:string
-}
+
 
 
 @Entity()
@@ -29,7 +22,7 @@ export default class User extends BaseEntity {
   public static SALT_ROUND = 8
 
   @PrimaryGeneratedColumn('uuid')
-  id!: string
+  uuid!: string
 
   @Column({ nullable: false, unique: true })
   email!: string
@@ -39,6 +32,9 @@ export default class User extends BaseEntity {
 
   @Column({ nullable: false })
   firstname!: string
+
+  @Column({ nullable: false })
+  nickname!: string
 
   @Column({ nullable: false })
   lastname!: string
@@ -70,9 +66,10 @@ export default class User extends BaseEntity {
     return bcrypt.compareSync(uncryptedPassword, this.password)
   }
 
-  public toJSON(): JSONUser {
-    const json: User = Object.assign({}, this)
-    const { password, ...jsonUser } = json
-    return jsonUser
+  public toJSON(): Partial<User> {
+    const json: Partial<User> = Object.assign({}, this)
+    delete json.password
+   /* const { password, ...jsonUser } = json*/
+    return json
   }
 }
