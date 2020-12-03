@@ -6,7 +6,7 @@ const users = [
         id: "2f38ec56-7757-42d7-8f13-cca1df2f780c",
         firstname: "Josias",
         lastname: "Assasmoi",
-        email: "josias_trocify@yopmail.com",
+        email: "josias_mys3mj@yopmail.com",
         password: '123456',
 
     },
@@ -14,7 +14,7 @@ const users = [
         id: "4f38ec56-7757-42d7-8f13-cca1df2f780c",
         firstname: "Maxime",
         lastname: "Galissaire",
-        email: "maxime_trocify@yopmail.com",
+        email: "maxime_mys3mj@yopmail.com",
         password: '123456',
     },
 
