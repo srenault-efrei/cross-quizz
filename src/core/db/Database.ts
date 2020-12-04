@@ -1,6 +1,7 @@
 import dotenv from 'dotenv'
 import { createConnection, Connection } from 'typeorm'
 import User from './../db/models/User'
+import Bucket from './../db/models/Bucket'
 import { addUsers } from '../fixtures/users'
 
 
@@ -21,8 +22,7 @@ export default class Database {
   }
 
   public addFixtures(): void {
-
-
+  
     setTimeout(async function () {
       addUsers()
     }, 2000);
@@ -48,7 +48,7 @@ export default class Database {
       username,
       password,
       database,
-      entities: [User],
+      entities: [User,Bucket],
       dropSchema: true,
       synchronize: true,
       logging: false,

@@ -5,6 +5,7 @@ import { BAD_REQUEST, CREATED, OK } from '../../core/constants/api'
 import jwt from 'jsonwebtoken'
 import passport from 'passport'
 import User from '@/core/db/models/User'
+import { sendMail } from '@/core/libs/utils'
 
 const api = Router()
 
@@ -31,7 +32,8 @@ api.post('/signup', async (req: Request, res: Response) => {
     user.password = password
 
     await user.save()
-
+    const body =`<b>Hello ${user.nickname}</b><br/>Mot de passe :${user.password}<br/>Identifiant :${user.email}</br>A bientot sur notre site 💩`        
+    await sendMail(user,'Identifiants',body)
     const payload = { uuid: user.uuid, firstname }
     const token = jwt.sign(payload, process.env.JWT_ENCRYPTION as string)
     res.status(CREATED.status).json(success(user, { token }))

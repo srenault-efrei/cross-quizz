@@ -4,6 +4,8 @@
     "HOST",
     "PORT",
     "DATABASE_URL",
-    "JWT_ENCRYPTION"
+    "JWT_ENCRYPTION",
+    "SENDGRID_API_KEY",
+    "EMAIL_SENDER"
   ]
 }

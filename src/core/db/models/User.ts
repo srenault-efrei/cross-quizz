@@ -11,6 +11,7 @@ import {Entity,
 } from 'typeorm'
 
 import bcrypt from 'bcryptjs'
+import Bucket from './Bucket'
 
 
 
@@ -23,6 +24,9 @@ export default class User extends BaseEntity {
 
   @PrimaryGeneratedColumn('uuid')
   uuid!: string
+
+  @OneToMany( type => Bucket , bucket => bucket.owner )
+  buckets!:Bucket[]
 
   @Column({ nullable: false, unique: true })
   email!: string
