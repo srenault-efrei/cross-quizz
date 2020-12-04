@@ -16,7 +16,7 @@ const api = Router()
   api.get('/:uuid', async (req: Request, res: Response) => {
     const { uuid } = req.params
     try {
-      const user : User | undefined = await User.findOne(uuid)
+      const user : User | undefined = await User.findOne(uuid,{relations:['buckets']})
   
       if(user){
         res.status(CREATED.status).json(success(user))
