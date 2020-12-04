@@ -162,10 +162,10 @@ api.get('/:uuid/buckets', async (req: Request, res: Response) => {
   }
 })
 
-api.put('/:uuid/buckets/:bucketName', async (req: Request, res: Response) => {
+api.put('/:uuid/buckets/:bucket_name', async (req: Request, res: Response) => {
   try {
     const fields = ['newBucketName']
-    const { uuid, bucketName } = req.params
+    const { uuid, bucket_name } = req.params
     
     const missings = fields.filter((field: string) => !req.body[field])
     if (!isEmpty(missings)) {
@@ -181,6 +181,7 @@ api.put('/:uuid/buckets/:bucketName', async (req: Request, res: Response) => {
       .createQueryBuilder("bucket")
       .leftJoinAndSelect("bucket.owner", "user")
       .where("bucket.owner = :user", { user })
+      .andWhere("bucket.name = :bucket_name", { bucket_name })
       .getOne()
 
       if(bucket) {
