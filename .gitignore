@@ -114,3 +114,6 @@ temp/
 
 # MAC
 *..DS_Store
+
+#myS3DATA Directory
+myS3DATA
