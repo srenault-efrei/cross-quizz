@@ -25,10 +25,6 @@ export default class Bucket extends BaseEntity {
   @Column({ nullable: false })
   name!: string
 
-  @Column({ nullable: false })
-  firstname!: string
-
-
   @CreateDateColumn()
   createdAt!: string
 
