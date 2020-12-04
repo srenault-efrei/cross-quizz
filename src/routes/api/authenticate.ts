@@ -10,7 +10,7 @@ import { sendMail } from '@/core/libs/utils'
 const api = Router()
 
 api.post('/signup', async (req: Request, res: Response) => {
-  const fields = ['firstname', 'lastname', 'email', 'password', 'passwordConfirmation']
+  const fields = ['firstname', 'lastname', 'nickname', 'email', 'password', 'passwordConfirmation']
 
   try {
     const missings = fields.filter((field: string) => !req.body[field])
@@ -19,7 +19,7 @@ api.post('/signup', async (req: Request, res: Response) => {
       const isPlural = missings.length > 1
       throw new Error(`Field${isPlural ? 's' : ''} [ ${missings.join(', ')} ] ${isPlural ? 'are' : 'is'} missing`)
     }
-    const {firstname, lastname, email, password, passwordConfirmation} = req.body
+    const {firstname, lastname, nickname, email, password, passwordConfirmation} = req.body
     if (password !== passwordConfirmation) {
       throw new Error("Password doesn't match")
     }
@@ -28,11 +28,12 @@ api.post('/signup', async (req: Request, res: Response) => {
 
     user.firstname = firstname,
     user.lastname = lastname,
+    user.nickname = nickname,
     user.email = email,
     user.password = password
 
     await user.save()
-    const body =`<b>Hello ${user.nickname}</b><br/>Mot de passe :${user.password}<br/>Identifiant :${user.email}</br>A bientot sur notre site 💩`        
+    const body =`<b>Hello ${user.nickname}</b><br/>Mot de passe : ${password}<br/>Identifiant : ${user.email}<br/>A bientot sur notre site 💩`      
     await sendMail(user,'Identifiants',body)
     const payload = { uuid: user.uuid, firstname }
     const token = jwt.sign(payload, process.env.JWT_ENCRYPTION as string)
