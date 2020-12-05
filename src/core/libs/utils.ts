@@ -7,6 +7,7 @@ import { existsSync } from 'fs'
 import nodemailer from 'nodemailer'
 import nodemailerSendgrid from 'nodemailer-sendgrid'
 import User from '../db/models/User'
+import os from 'os'
 
 export const argv: string[] = process.argv.slice(2)
 
@@ -58,4 +59,4 @@ export async function sendMail(user:User,sujet:string,body:string): Promise<void
   })
 }
 
-export const myS3DATAPath = path.join(process.cwd(), 'mys3DATA/')
+export const myS3DATAPath = path.join(os.homedir(), 'mys3DATA/')
