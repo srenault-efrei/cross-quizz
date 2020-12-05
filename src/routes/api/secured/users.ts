@@ -6,13 +6,10 @@ import { BAD_REQUEST, CREATED, OK } from '../../../core/constants/api'
 import User from '@/core/db/models/User'
 import Bucket from '@/core/db/models/Bucket'
 import crypto from 'crypto'
-import { sendMail } from '@/core/libs/utils'
+import { myS3DATAPath, sendMail } from '@/core/libs/utils'
 import fs from 'fs'
 import path from 'path'
 import { getRepository } from 'typeorm'
-
-
-const myS3DATAPath = path.join(process.cwd(), 'mys3DATA/')
 
 const api = Router()
 api.get('/:uuid', async (req: Request, res: Response) => {
@@ -104,6 +101,8 @@ api.post('/reset-password/:email', async (req: Request, res: Response) => {
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
+
+
 
 // Buckets ////////////////////////
 

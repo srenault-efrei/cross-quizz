@@ -57,3 +57,5 @@ export async function sendMail(user:User,sujet:string,body:string): Promise<void
     throw new Error(e)
   })
 }
+
+export const myS3DATAPath = path.join(process.cwd(), 'mys3DATA/')
