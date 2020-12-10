@@ -1,5 +1,6 @@
 import 'reflect-metadata'
 import fs from 'fs'
+import os from 'os'
 
 import { argv, prelude, mlog, myS3DATAPath } from './core/libs/utils'
 import Server from './Server'
@@ -12,8 +13,19 @@ const main = async (): Promise<void> => {
 
     const port = argv[0] || (process.env.PORT as string)
     const host = argv[1] || (process.env.HOST as string)
-    !fs.existsSync(myS3DATAPath) && fs.mkdirSync(myS3DATAPath)
-    console.log(` CHEMIN ==> ${myS3DATAPath}`);
+    if (!fs.existsSync(myS3DATAPath)){
+      fs.mkdirSync(myS3DATAPath)
+      console.log(`LE DOSSIER PRINCIPAL VIENT DETRE CREER`);
+    }
+    fs.readdir(os.homedir(), function (err, files) {
+        if (err) {
+          console.log(`ERRREUR => ${err}`);
+          return;
+        }
+        console.log(`FICHIERS => ${files}`);
+    });
+    
+    
     
     const server = new Server(host, parseInt(port, 10))
     await server.run()
