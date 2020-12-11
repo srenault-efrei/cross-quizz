@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express'
+import { Router, Request, Response, response } from 'express'
 import { isEmpty } from 'lodash'
 import bcrypt from 'bcryptjs'
 import { error, success } from '../../../core/helpers/response'
@@ -6,18 +6,35 @@ import { BAD_REQUEST, CREATED, OK } from '../../../core/constants/api'
 import User from '@/core/db/models/User'
 import Bucket from '@/core/db/models/Bucket'
 import crypto from 'crypto'
-import { myS3DATAPath, sendMail } from '@/core/libs/utils'
+import {  sendMail } from '@/core/libs/utils'
 import fs from 'fs'
 import path from 'path'
 import { getRepository } from 'typeorm'
+import { createFolder, deleteObject, existsObject, renameObject } from '@/core/services/amazonS3'
+import { MY_S3_DATA_PATH } from '@/core/constants/s3'
 
 const api = Router()
+
+
+
+// api.use('/:uuid', (req,_, next)=> {
+//   const { uuid } = req.params
+  
+//   if (uuid != req.uuid){
+//     throw new Error("Your are not authorized")
+//   }
+//   next()
+// })
+
 api.get('/:uuid', async (req: Request, res: Response) => {
   const { uuid } = req.params
   try {
+
     const user: User | undefined = await User.findOne(uuid, { relations: ['buckets'] })
 
     if (user) {
+
+
       res.status(CREATED.status).json(success(user))
     }
     else {
@@ -106,6 +123,7 @@ api.post('/reset-password/:email', async (req: Request, res: Response) => {
 
 // Buckets ////////////////////////
 
+
 api.post('/:uuid/buckets', async (req: Request, res: Response) => {
   try {
     const { uuid } = req.params
@@ -121,24 +139,25 @@ api.post('/:uuid/buckets', async (req: Request, res: Response) => {
     const user: User | undefined = await User.findOne(uuid)
 
     if (user) {
-      const userDirectory = path.join(myS3DATAPath, `${uuid}/${name}`)
-
-      !fs.existsSync(userDirectory) && fs.mkdirSync(userDirectory)
+      const newFolderPath = getObjectPath(uuid,name)
       
+      // if (!fs.existsSync(userDirectory)) {
+      //   fs.mkdirSync(userDirectory, { recursive: true })
+      // }
+      await createFolder(newFolderPath)
       let bucket = new Bucket()
-
       bucket.name = name
       bucket.owner = user
-
       await bucket.save()
-
       res.status(CREATED.status).json(success(bucket))
+      
     }
     else {
-      res.status(BAD_REQUEST.status).json({ 'err': 'user inexistant' })
+      throw new Error('Utilisateur inexistant')
     }
     
   } catch (err) {
+    
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
@@ -161,10 +180,39 @@ api.get('/:uuid/buckets', async (req: Request, res: Response) => {
   }
 })
 
-api.put('/:uuid/buckets/:bucket_name', async (req: Request, res: Response) => {
+api.get('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
+  try {
+    const { uuid, bucket_id } = req.params
+    
+    const user : User | undefined = await User.findOne(uuid)
+
+    if (user) {
+      const bucket: Bucket | undefined  = await getRepository(Bucket)
+      .createQueryBuilder("bucket")
+      .leftJoinAndSelect("bucket.owner", "user")
+      .where("bucket.owner.uuid = :uuid", { uuid })
+      .andWhere("bucket.id = :bucket_id", { bucket_id })
+      .getOne()
+
+      if(bucket) {
+        res.status(OK.status).json(success(bucket))
+      }
+      else {
+        res.status(BAD_REQUEST.status).json({ 'err': 'bucket inexistant' })
+      }
+    }
+    else {
+      res.status(BAD_REQUEST.status).json({ 'err': 'user inexistant' })
+    }
+  } catch (err) {
+    res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
+  }
+})
+
+api.put('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
   try {
     const fields = ['newBucketName']
-    const { uuid, bucket_name } = req.params
+    const { uuid, bucket_id } = req.params
     
     const missings = fields.filter((field: string) => !req.body[field])
     if (!isEmpty(missings)) {
@@ -179,17 +227,19 @@ api.put('/:uuid/buckets/:bucket_name', async (req: Request, res: Response) => {
       const bucket: Bucket | undefined  = await getRepository(Bucket)
       .createQueryBuilder("bucket")
       .leftJoinAndSelect("bucket.owner", "user")
-      .where("bucket.owner = :user", { user })
-      .andWhere("bucket.name = :bucket_name", { bucket_name })
+      .where("bucket.owner.uuid = :uuid", { uuid })
+      .andWhere("bucket.id = :bucket_id", { bucket_id })
       .getOne()
 
       if(bucket) {
+        const oldPath= getObjectPath(uuid,bucket.name)
+        const newPath= getObjectPath(uuid,newBucketName)
+        await renameObject(oldPath,newPath)
         bucket.name = newBucketName
-
         await bucket.save()
-  
         res.status(OK.status).json(success(bucket))
-      } else {
+      }
+      else {
         res.status(BAD_REQUEST.status).json({ 'err': 'bucket inexistant' })
       }
     }
@@ -201,49 +251,71 @@ api.put('/:uuid/buckets/:bucket_name', async (req: Request, res: Response) => {
   }
 })
 
-api.delete('/:uuid/buckets', async (req: Request, res: Response) => {
-  const { uuid } = req.params
+
+
+api.delete('/:uuid/buckets/bucket_id', async (req: Request, res: Response) => {
   try {
+    const { uuid, bucket_id } = req.params
     const user : User | undefined = await User.findOne(uuid)
 
-    if(user){
-      await user.remove()
-      res.status(OK.status).json(success(user))
-    }
-    else{
-      res.status(BAD_REQUEST.status).json({ 'err': 'user inexistant' })
-    }  
-  } catch (err) {
-    res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
-  }
-})
-
-api.get('/:uuid/buckets/:bucket', async (req: Request, res: Response) => {
-  const { uuid, bucket } = req.params
-  const userDirectory = `${myS3DATAPath}/${uuid}/${bucket}`
-  try {
-    const user: User | undefined = await User.findOne(uuid)
-
     if (user) {
-      if (fs.existsSync(userDirectory)) {
-        res.status(CREATED.status).json({ 'blobs': fs.readdirSync(userDirectory) })
-      } else {
-        res.status(BAD_REQUEST.status).json({ 'err': `No such file or directory : ${uuid}/${bucket}` })
+      const bucket: Bucket | undefined  = await getRepository(Bucket)
+      .createQueryBuilder("bucket")
+      .leftJoinAndSelect("bucket.owner", "user")
+      .where("bucket.owner.uuid = :uuid", { uuid })
+      .andWhere("bucket.id = :bucket_id", { bucket_id })
+      .getOne()
+
+      if(bucket) {
+        const path= getObjectPath(uuid,bucket.name)
+        await deleteObject(path)
+        await bucket.remove()
+        await bucket.save()
+        res.status(OK.status).json(success(bucket))
+      }
+      else {
+        res.status(BAD_REQUEST.status).json({ 'err': 'bucket inexistant' })
       }
     }
     else {
       res.status(BAD_REQUEST.status).json({ 'err': 'user inexistant' })
     }
   } catch (err) {
-    res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
+      res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
+
+api.head('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
+  try {
+    const { uuid, bucket_id } = req.params
+    const user : User | undefined = await User.findOne(uuid)
+
+    if (user) {
+      const bucket: Bucket | undefined  = await getRepository(Bucket)
+      .createQueryBuilder("bucket")
+      .leftJoinAndSelect("bucket.owner", "user")
+      .where("bucket.owner.uuid = :uuid", { uuid })
+      .andWhere("bucket.id = :bucket_id", { bucket_id })
+      .getOne()
+
+      if(bucket) {
+        const path= getObjectPath(uuid,bucket.name)
+      const status : number =  await existsObject(path)
+        res.status(status).send()
+      }
+    }
+    res.status(BAD_REQUEST.status).send()
+  } catch (err) {
+    res.status(BAD_REQUEST.status).send()
+  }
+})
+
 
 // Blob ////////////////////////
 
 api.get('/:uuid/buckets/:bucket/blobs/:blob', async (req: Request, res: Response) => {
   const { uuid, bucket, blob } = req.params
-  const userDirectory = `${myS3DATAPath}/${uuid}/${bucket}/${blob}`
+  const userDirectory = `${MY_S3_DATA_PATH}/${uuid}/${bucket}/${blob}`
   try {
     const user: User | undefined = await User.findOne(uuid)
 
@@ -261,6 +333,10 @@ api.get('/:uuid/buckets/:bucket/blobs/:blob', async (req: Request, res: Response
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
+
+export function getObjectPath(uuid:string,name:string){
+  return path.join(MY_S3_DATA_PATH, `${uuid}/${name}/`)
+}
 
 
 export default api

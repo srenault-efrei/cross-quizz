@@ -1,7 +1,11 @@
 import AWS from 'aws-sdk'
+import { GetObjectTaggingRequest } from 'aws-sdk/clients/s3';
 import dotenv from 'dotenv'
+import { BAD_REQUEST, OK } from '../constants/api';
+import { BUCKET_NAME } from '../constants/s3';
+import { success } from '../helpers/response';
 const fs = require('fs')
-
+AWS.config.update({region: 'eu-west-3'});
 
 interface Param {
   Bucket: string,
@@ -10,13 +14,22 @@ interface Param {
   ACL:string
 }
 
-  export default function uploadFile(filename: string, key: string ) {
+
+
+function getS3() {
+  return new AWS.S3({
+    accessKeyId: process.env.AWSID as string,
+    secretAccessKey: process.env.AWSSECRET as string,
+  });
+}
+
+
+
+  export function uploadFile(filename: string, key: string ) {
 
   dotenv.config()
-  const s3 = getS3();
+  const s3 = getS3(); 
   const fileContent = fs.readFileSync(filename);
-      
-
  // Setting up S3 upload parameters
  const params: Param = {
   Bucket: 'mys3-mj',
@@ -35,10 +48,114 @@ s3.upload(params, function(err: Object, data:Object) {
 }
 
 
-function getS3() {
-  return new AWS.S3({
-    accessKeyId: process.env.AWSID,
-    secretAccessKey: process.env.AWSSECRET,
-  });
+
+export async function createFolder(path: string ) : never | Promise<void> {
+  // get s3 Object 
+  const s3 = getS3();
+  //Specific params for headObject
+  const HEAD_PARAMS:GetObjectTaggingRequest = {
+    Bucket: BUCKET_NAME,
+    Key: path, 
+  }
+  // specific Param for putObject
+ const PARAMS: Param = {
+  Bucket: BUCKET_NAME,
+  Key: path, 
+  Body: '',
+  ACL:'public-read',
+};
+
+//On retourne une new promise au top de la fonction pour qu'elle soit gerée dans le try catch qui l'appel
+return new Promise((resolve,reject) => {
+  s3.headObject(HEAD_PARAMS, function (err, _) {  
+    if (err && err.code === 'NotFound') {  
+        s3.putObject(PARAMS, function(err: Object, data:Object) {
+          if (err) {
+            reject(err)
+          }
+        // tout va bien 
+        resolve()
+        });
+      }
+    else {
+      reject(new Error('Dossier deja existant'))
+    }
+  })
+})
+
+
+
 }
 
+
+export async function renameObject(oldName:string,newName:string){
+const s3 = getS3()
+
+return new Promise((resolve,reject) => {
+
+  // Copy the object to a new location
+   s3.copyObject({
+  Bucket: BUCKET_NAME, 
+  CopySource: `${BUCKET_NAME}/${oldName}`, 
+  Key: newName
+ },(err,data) => {
+   if( err){
+     reject(err)
+   }
+ }).promise().then(() => {
+      // Delete the old object
+      s3.deleteObject({
+        Bucket: BUCKET_NAME, 
+        Key: oldName
+      },(err,data)=> {
+        if (err){
+          reject(err)
+        }
+        resolve()
+      })
+     
+ })
+  
+
+
+} )
+
+}
+
+export async function deleteObject(path:string){
+  const s3 = getS3()
+    return new Promise((resolve,reject)=>{
+   // Delete the  object
+    s3.deleteObject({
+      Bucket: BUCKET_NAME, 
+      Key: path
+    }, (err,_)=>{
+      if (err){
+        reject(err)
+      }
+      resolve()
+    })
+  })
+ 
+  }
+
+export async function existsObject(path:string) : Promise<number> {
+  const s3 = getS3()  
+  const HEAD_PARAMS:GetObjectTaggingRequest = {
+    Bucket: BUCKET_NAME,
+    Key: path, 
+  }
+  return new Promise((resolve,reject) => {
+    s3.headObject(HEAD_PARAMS, function (err, _) {  
+      if (err && err.code === 'NotFound') {  
+        reject(BAD_REQUEST.status)
+      }
+      else {
+        resolve(OK.status)
+      }
+    })
+  })
+  
+ 
+   
+}

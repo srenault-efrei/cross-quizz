@@ -6,6 +6,8 @@
     "DATABASE_URL",
     "JWT_ENCRYPTION",
     "SENDGRID_API_KEY",
-    "EMAIL_SENDER"
+    "EMAIL_SENDER",
+    "AWSID",
+    "AWSSECRET"
   ]
 }

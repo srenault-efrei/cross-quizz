@@ -7,6 +7,7 @@ import passport from 'passport'
 import User from '@/core/db/models/User'
 import { sendMail } from '@/core/libs/utils'
 
+
 const api = Router()
 
 api.post('/signup', async (req: Request, res: Response) => {
@@ -46,20 +47,20 @@ api.post('/signup', async (req: Request, res: Response) => {
 
 
 
-api.post('/signin', async (req: Request, res: Response) => {
+api.post('/signin', async (req: Request, res: Response,next) => {
   const authenticate = passport.authenticate('local', { session: false }, (errorMessage, user) => {
     if (errorMessage) {
       res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, new Error(errorMessage)))
       return
     }
-
     const payload = { uuid: user.uuid, firstname: user.firstname }
     const token = jwt.sign(payload, process.env.JWT_ENCRYPTION as string)
-
-    res.status(OK.status).json(success(user, { token }))
+    //req.uuid = payload.uuid
+    res.status(OK.status).json(success(user, {token }))
+    
   })
 
-  authenticate(req, res)
+  authenticate(req, res,next)
 })
 
 export default api

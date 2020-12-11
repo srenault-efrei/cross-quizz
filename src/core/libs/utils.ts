@@ -59,4 +59,3 @@ export async function sendMail(user:User,sujet:string,body:string): Promise<void
   })
 }
 
-export const myS3DATAPath = path.join(os.homedir(), 'mys3DATA/')
