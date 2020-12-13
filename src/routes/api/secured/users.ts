@@ -10,8 +10,13 @@ import {  sendMail } from '@/core/libs/utils'
 import fs from 'fs'
 import path from 'path'
 import { getRepository } from 'typeorm'
-import { createFolder, deleteObject, existsObject, renameObject } from '@/core/services/amazonS3'
+import { createAwsFolder, deleteAwsObject, existsAwsObject, renameAwsObject, uploadFile } from '@/core/services/amazonS3'
 import { MY_S3_DATA_PATH } from '@/core/constants/s3'
+import { createLocalFolder, deleteLocalFolder, existsLocalObject, renameLocalFolder } from '@/core/local_storage'
+import multer from 'multer'
+import {  upload } from '@/core/local_storage/multer'
+import Blob from '@/core/db/models/Blob'
+import { UPLOAD_PATH } from '@/core/constants/local_storage'
 
 const api = Router()
 
@@ -20,7 +25,7 @@ const api = Router()
 // api.use('/:uuid', (req,_, next)=> {
 //   const { uuid } = req.params
   
-//   if (uuid != req.uuid){
+//   if (uuid != req.user.uuid){
 //     throw new Error("Your are not authorized")
 //   }
 //   next()
@@ -33,8 +38,6 @@ api.get('/:uuid', async (req: Request, res: Response) => {
     const user: User | undefined = await User.findOne(uuid, { relations: ['buckets'] })
 
     if (user) {
-
-
       res.status(CREATED.status).json(success(user))
     }
     else {
@@ -141,10 +144,13 @@ api.post('/:uuid/buckets', async (req: Request, res: Response) => {
     if (user) {
       const newFolderPath = getObjectPath(uuid,name)
       
-      // if (!fs.existsSync(userDirectory)) {
-      //   fs.mkdirSync(userDirectory, { recursive: true })
-      // }
-      await createFolder(newFolderPath)
+      if ('NPM_PRODUCTION' in process.env == false){  
+        createLocalFolder(newFolderPath)
+      }
+      else{
+        await createAwsFolder(newFolderPath)
+      }
+     
       let bucket = new Bucket()
       bucket.name = name
       bucket.owner = user
@@ -234,7 +240,13 @@ api.put('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
       if(bucket) {
         const oldPath= getObjectPath(uuid,bucket.name)
         const newPath= getObjectPath(uuid,newBucketName)
-        await renameObject(oldPath,newPath)
+        if ('NPM_PRODUCTION' in process.env == false){  
+          renameLocalFolder(oldPath,newPath)
+        }
+        else{
+          await renameAwsObject(oldPath,newPath)
+        }
+        
         bucket.name = newBucketName
         await bucket.save()
         res.status(OK.status).json(success(bucket))
@@ -251,13 +263,11 @@ api.put('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
   }
 })
 
-
-
-api.delete('/:uuid/buckets/bucket_id', async (req: Request, res: Response) => {
+api.delete('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
   try {
+    
     const { uuid, bucket_id } = req.params
     const user : User | undefined = await User.findOne(uuid)
-
     if (user) {
       const bucket: Bucket | undefined  = await getRepository(Bucket)
       .createQueryBuilder("bucket")
@@ -265,12 +275,16 @@ api.delete('/:uuid/buckets/bucket_id', async (req: Request, res: Response) => {
       .where("bucket.owner.uuid = :uuid", { uuid })
       .andWhere("bucket.id = :bucket_id", { bucket_id })
       .getOne()
-
+      
       if(bucket) {
         const path= getObjectPath(uuid,bucket.name)
-        await deleteObject(path)
+        if ('NPM_PRODUCTION' in process.env == false){  
+          deleteLocalFolder(path)
+        }
+        else{
+          await deleteAwsObject(path)
+        }
         await bucket.remove()
-        await bucket.save()
         res.status(OK.status).json(success(bucket))
       }
       else {
@@ -285,6 +299,7 @@ api.delete('/:uuid/buckets/bucket_id', async (req: Request, res: Response) => {
   }
 })
 
+// return 200 if bucket of user exists exist 400 if not
 api.head('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
   try {
     const { uuid, bucket_id } = req.params
@@ -300,7 +315,13 @@ api.head('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
 
       if(bucket) {
         const path= getObjectPath(uuid,bucket.name)
-      const status : number =  await existsObject(path)
+        let status : number = 404
+        if ('NPM_PRODUCTION' in process.env == false){  
+          status = existsLocalObject(path)
+        }
+        else{
+         status = await existsAwsObject(path)
+        }
         res.status(status).send()
       }
     }
@@ -313,26 +334,177 @@ api.head('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
 
 // Blob ////////////////////////
 
-api.get('/:uuid/buckets/:bucket/blobs/:blob', async (req: Request, res: Response) => {
-  const { uuid, bucket, blob } = req.params
-  const userDirectory = `${MY_S3_DATA_PATH}/${uuid}/${bucket}/${blob}`
-  try {
-    const user: User | undefined = await User.findOne(uuid)
+api.post('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response) => {
 
+  try {
+    
+    const { uuid ,bucket_id} = req.params
+    const user: User | undefined = await User.findOne(uuid)
     if (user) {
-      if (fs.existsSync(userDirectory)) {
-        res.status(CREATED.status).json({ 'blob-exist': fs.existsSync(userDirectory) })
-      } else {
-        res.status(BAD_REQUEST.status).json({ 'err': `No such file or directory : ${uuid}/${bucket}/${blob}` })
+      const bucket: Bucket | undefined  = await getRepository(Bucket)
+      .createQueryBuilder("bucket")
+      .leftJoinAndSelect("bucket.owner", "user")
+      .where("bucket.owner.uuid = :uuid", { uuid })
+      .andWhere("bucket.id = :bucket_id", { bucket_id })
+      .getOne()
+      if(bucket) {
+        const path= getObjectPath(uuid,bucket.name)
+          const single_upload : Express.Multer.File = await  new Promise((resolve, reject) => {
+            upload.single('data')(req,res, (err)=> {
+              if (err){
+                reject(err)
+              }
+              else{
+                resolve(req.file)
+              }
+            })
+          })
+          if ('NODE_PRODUCTION' in process.env){
+            await uploadFile(single_upload.originalname,path)
+            fs.unlinkSync(single_upload.path)
+          }
+         let blob = new Blob()
+         blob.name= single_upload.originalname
+         blob.size = single_upload.size 
+         blob.bucket = bucket
+         blob.path = path
+         await blob.save()
+
+        res.status(200).json(success(blob))
+
+      }
+      else {
+        res.status(BAD_REQUEST.status).json({ 'err': 'bucket inexistant' })
       }
     }
     else {
       res.status(BAD_REQUEST.status).json({ 'err': 'user inexistant' })
     }
   } catch (err) {
-    res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
+      res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
+
+
+api.get('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response) => {
+  try {
+    const { uuid ,bucket_id} = req.params
+    const user: User | undefined = await User.findOne(uuid)
+    if (user) {
+      const bucket: Bucket | undefined  = await getRepository(Bucket)
+      .createQueryBuilder("bucket")
+      .leftJoinAndSelect("bucket.owner", "user")
+      .where("bucket.owner.uuid = :uuid", { uuid })
+      .andWhere("bucket.id = :bucket_id", { bucket_id })
+      .getOne()
+      if(bucket) {
+   
+        if(bucket.blobs){
+          res.status(OK.status).json(bucket.blobs)
+        }
+        else{
+          throw new Error('aucun blobs trouvés pour ce bucket')
+        }
+
+      }
+      else {
+        res.status(BAD_REQUEST.status).json({ 'err': 'bucket inexistant' })
+      }
+    }
+    else {
+      res.status(BAD_REQUEST.status).json({ 'err': 'user inexistant' })
+    }
+  } catch (err) {
+      res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
+  }
+})
+
+
+api.get('/:uuid/buckets/:bucket_id/blobs/:blob_id', async (req: Request, res: Response) => {
+  try {
+    const { uuid ,bucket_id,blob_id} = req.params
+    const user: User | undefined = await User.findOne(uuid)
+    if (user) {
+      const bucket: Bucket | undefined  = await getRepository(Bucket)
+      .createQueryBuilder("bucket")
+      .leftJoinAndSelect("bucket.owner", "user")
+      .where("bucket.owner.uuid = :uuid", { uuid })
+      .andWhere("bucket.id = :bucket_id", { bucket_id })
+      .getOne()
+      if(bucket) {
+        const blob: Blob | undefined  = await getRepository(Blob)
+        .createQueryBuilder("blob")
+        .leftJoinAndSelect("blob.bucket", "bucket")
+        .where("blob.bucket.id = :bucket_id", { bucket_id })
+        .andWhere("blob.id = :blob_id", { blob_id })
+        .getOne()
+       
+        if (blob){
+          res.status(OK.status).json(success(blob))
+        }
+        else{
+          throw new Error('Fichier inexistant')
+        }
+      }
+      else {
+        res.status(BAD_REQUEST.status).json({ 'err': 'bucket inexistant' })
+      }
+    }
+    else {
+      res.status(BAD_REQUEST.status).json({ 'err': 'user inexistant' })
+    }
+  } catch (err) {
+      res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
+  }
+})
+
+
+api.delete('/:uuid/buckets/:bucket_id/blobs/:blob_id', async (req: Request, res: Response) => {
+  try {
+    const { uuid ,bucket_id,blob_id} = req.params
+    const user: User | undefined = await User.findOne(uuid)
+    if (user) {
+      const bucket: Bucket | undefined  = await getRepository(Bucket)
+      .createQueryBuilder("bucket")
+      .leftJoinAndSelect("bucket.owner", "user")
+      .where("bucket.owner.uuid = :uuid", { uuid })
+      .andWhere("bucket.id = :bucket_id", { bucket_id })
+      .getOne()
+      if(bucket) {
+        const blob: Blob | undefined  = await getRepository(Blob)
+        .createQueryBuilder("blob")
+        .leftJoinAndSelect("blob.bucket", "bucket")
+        .where("blob.bucket.id = :bucket_id", { bucket_id })
+        .andWhere("blob.id = :blob_id", { blob_id })
+        .getOne()
+       
+        if (blob){
+          if ('NODE_PRODUCTION' in process.env){
+            await deleteAwsObject(blob.path) 
+          }
+          else{
+            fs.unlinkSync(UPLOAD_PATH+blob.name)
+          }
+          await blob.remove()
+          res.status(OK.status).json(success(blob))
+        }
+        else{
+          throw new Error('Fichier inexistant')
+        }
+      }
+      else {
+        res.status(BAD_REQUEST.status).json({ 'err': 'bucket inexistant' })
+      }
+    }
+    else {
+      res.status(BAD_REQUEST.status).json({ 'err': 'user inexistant' })
+    }
+  } catch (err) {
+      res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
+  }
+})
+
+
 
 export function getObjectPath(uuid:string,name:string){
   return path.join(MY_S3_DATA_PATH, `${uuid}/${name}/`)

@@ -9,6 +9,7 @@ import {Entity,
   OneToMany,
   ManyToOne
 } from 'typeorm'
+import Blob from './Blob'
 import User from './User'
 
 
@@ -20,7 +21,10 @@ export default class Bucket extends BaseEntity {
   id!: number
 
   @ManyToOne(type => User , user => user.buckets )
-  owner: User | undefined
+  owner: Partial<User> | undefined
+
+  @OneToMany(_ => Blob , blob => blob.bucket  )
+  blobs! : Blob[]
 
   @Column({ nullable: false })
   name!: string
@@ -52,8 +56,9 @@ export default class Bucket extends BaseEntity {
    * Methods
    */
 
-  public toJSON(): Bucket {
-    const json: Bucket = Object.assign({}, this)
+  public toJSON(): Partial<Bucket> {
+    const json: Partial<Bucket> = Object.assign({}, this)
+    delete json.owner?.password
     return json
   }
 }

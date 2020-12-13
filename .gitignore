@@ -116,4 +116,7 @@ temp/
 *..DS_Store
 
 #myS3DATA Directory
-myS3DATA
+myS3DATA/
+
+#upload directory
+uploads/

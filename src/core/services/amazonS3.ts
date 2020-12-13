@@ -24,10 +24,8 @@ function getS3() {
 }
 
 
+export function uploadFile(filename: string, key: string ) : never | Promise<void> {
 
-  export function uploadFile(filename: string, key: string ) {
-
-  dotenv.config()
   const s3 = getS3(); 
   const fileContent = fs.readFileSync(filename);
  // Setting up S3 upload parameters
@@ -38,18 +36,21 @@ function getS3() {
   ACL:'public-read'
 };
 
-// Uploading files to the bucket
+return new Promise((resolve,reject) => {
+  // Uploading files to the bucket
 s3.upload(params, function(err: Object, data:Object) {
   if (err) {
-      throw err;
+      reject(err);
   }
  });
+ resolve()
 
+})
 }
 
 
 
-export async function createFolder(path: string ) : never | Promise<void> {
+export async function createAwsFolder(path: string ) : never | Promise<void> {
   // get s3 Object 
   const s3 = getS3();
   //Specific params for headObject
@@ -69,7 +70,7 @@ export async function createFolder(path: string ) : never | Promise<void> {
 return new Promise((resolve,reject) => {
   s3.headObject(HEAD_PARAMS, function (err, _) {  
     if (err && err.code === 'NotFound') {  
-        s3.putObject(PARAMS, function(err: Object, data:Object) {
+        s3.putObject(PARAMS, function(err: Object,_) {
           if (err) {
             reject(err)
           }
@@ -88,11 +89,10 @@ return new Promise((resolve,reject) => {
 }
 
 
-export async function renameObject(oldName:string,newName:string){
+export async function renameAwsObject(oldName:string,newName:string)  : never | Promise<void>{
 const s3 = getS3()
 
 return new Promise((resolve,reject) => {
-
   // Copy the object to a new location
    s3.copyObject({
   Bucket: BUCKET_NAME, 
@@ -107,22 +107,18 @@ return new Promise((resolve,reject) => {
       s3.deleteObject({
         Bucket: BUCKET_NAME, 
         Key: oldName
-      },(err,data)=> {
+      },(err,_)=> {
         if (err){
           reject(err)
         }
         resolve()
-      })
-     
+      }) 
  })
-  
-
-
 } )
 
 }
 
-export async function deleteObject(path:string){
+export async function deleteAwsObject(path:string)  : never | Promise<void> {
   const s3 = getS3()
     return new Promise((resolve,reject)=>{
    // Delete the  object
@@ -139,7 +135,7 @@ export async function deleteObject(path:string){
  
   }
 
-export async function existsObject(path:string) : Promise<number> {
+export async function existsAwsObject(path:string) : Promise<number> {
   const s3 = getS3()  
   const HEAD_PARAMS:GetObjectTaggingRequest = {
     Bucket: BUCKET_NAME,

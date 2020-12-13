@@ -3,6 +3,7 @@ import { createConnection, Connection } from 'typeorm'
 import User from './../db/models/User'
 import Bucket from './../db/models/Bucket'
 import { addUsers } from '../fixtures/users'
+import Blob from './models/Blob'
 
 
 
@@ -48,7 +49,7 @@ export default class Database {
       username,
       password,
       database,
-      entities: [User,Bucket],
+      entities: [User,Bucket,Blob],
       dropSchema: true,
       synchronize: true,
       logging: false,
