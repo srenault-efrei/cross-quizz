@@ -144,7 +144,7 @@ api.post('/:uuid/buckets', async (req: Request, res: Response) => {
     if (user) {
       const newFolderPath = getObjectPath(uuid,name)
       
-      if ('NPM_PRODUCTION' in process.env == false){  
+      if ('NPM_CONFIG_PRODUCTION' in process.env == false){  
         createLocalFolder(newFolderPath)
       }
       else{
@@ -240,7 +240,7 @@ api.put('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
       if(bucket) {
         const oldPath= getObjectPath(uuid,bucket.name)
         const newPath= getObjectPath(uuid,newBucketName)
-        if ('NPM_PRODUCTION' in process.env == false){  
+        if ('NPM_CONFIG_PRODUCTION' in process.env == false){  
           renameLocalFolder(oldPath,newPath)
         }
         else{
@@ -278,7 +278,7 @@ api.delete('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
       
       if(bucket) {
         const path= getObjectPath(uuid,bucket.name)
-        if ('NPM_PRODUCTION' in process.env == false){  
+        if ('NPM_CONFIG_PRODUCTION' in process.env == false){  
           deleteLocalFolder(path)
         }
         else{
@@ -316,7 +316,7 @@ api.head('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
       if(bucket) {
         const path= getObjectPath(uuid,bucket.name)
         let status : number = 404
-        if ('NPM_PRODUCTION' in process.env == false){  
+        if ('NPM_CONFIG_PRODUCTION' in process.env == false){  
           status = existsLocalObject(path)
         }
         else{
