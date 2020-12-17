@@ -359,7 +359,7 @@ api.post('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response)
               }
             })
           })
-          if ('NODE_PRODUCTION' in process.env){
+          if ('NPM_CONFIG_PRODUCTION' in process.env){
             await uploadFile(single_upload.originalname,path)
             fs.unlinkSync(single_upload.path)
           }
@@ -479,7 +479,7 @@ api.delete('/:uuid/buckets/:bucket_id/blobs/:blob_id', async (req: Request, res:
         .getOne()
        
         if (blob){
-          if ('NODE_PRODUCTION' in process.env){
+          if ('NPM_CONFIG_PRODUCTION' in process.env){
             await deleteAwsObject(blob.path) 
           }
           else{
