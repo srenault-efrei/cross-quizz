@@ -337,7 +337,6 @@ api.head('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
 api.post('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response) => {
 
   try {
-    
     const { uuid ,bucket_id} = req.params
     const user: User | undefined = await User.findOne(uuid)
     if (user) {
@@ -348,7 +347,6 @@ api.post('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response)
       .andWhere("bucket.id = :bucket_id", { bucket_id })
       .getOne()
       if(bucket) {
-        const path= getObjectPath(uuid,bucket.name)
           const single_upload : Express.Multer.File = await  new Promise((resolve, reject) => {
             upload.single('data')(req,res, (err)=> {
               if (err){
@@ -359,15 +357,16 @@ api.post('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response)
               }
             })
           })
+          single_upload.originalname = single_upload.originalname.replace('','_')
+          const fullPath= path.join(getObjectPath(uuid,bucket.name),single_upload.originalname)
           if ('NPM_CONFIG_PRODUCTION' in process.env){
-            await uploadFile(single_upload.originalname,path)
-            fs.unlinkSync(single_upload.path)
+            await uploadFile(single_upload,fullPath)
           }
          let blob = new Blob()
          blob.name= single_upload.originalname
          blob.size = single_upload.size 
          blob.bucket = bucket
-         blob.path = path
+         blob.path = fullPath
          await blob.save()
 
         res.status(200).json(success(blob))

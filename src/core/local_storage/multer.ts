@@ -1,9 +1,12 @@
 import multer from 'multer'
 import { UPLOAD_PATH } from '../constants/local_storage'
 import fs from 'fs'
+import { StorageGateway } from 'aws-sdk';
 
 
-const storageEngine = multer.diskStorage({
+const prodStorage = multer.memoryStorage();
+
+const localStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null,UPLOAD_PATH)
   },
@@ -13,4 +16,5 @@ const storageEngine = multer.diskStorage({
 })
  
 
-export const upload = multer({ storage: storageEngine })
+const storage = ('NPM_CONFIG_PRODUCTION' in process.env) ? prodStorage : localStorage
+export const upload = multer({ storage })

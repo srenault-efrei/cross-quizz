@@ -24,15 +24,16 @@ function getS3() {
 }
 
 
-export function uploadFile(filename: string, key: string ) : never | Promise<void> {
+export function uploadFile(file : Express.Multer.File , key: string ) : never | Promise<void> {
 
   const s3 = getS3(); 
-  const fileContent = fs.readFileSync(filename);
+
+  
  // Setting up S3 upload parameters
  const params: Param = {
   Bucket: 'mys3-mj',
   Key: key, // File name you want to save as in S3
-  Body: fileContent,
+  Body:file.buffer,
   ACL:'public-read'
 };
 
