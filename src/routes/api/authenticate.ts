@@ -53,11 +53,10 @@ api.post('/signin', async (req: Request, res: Response,next) => {
       res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, new Error(errorMessage)))
       return
     }
-    const payload = { uuid: user.uuid, firstname: user.firstname }
+    const payload : UserPayload = { uuid: user.uuid, firstname: user.firstname }
     const token = jwt.sign(payload, process.env.JWT_ENCRYPTION as string)
-    //req.uuid = payload.uuid
+    req.user  = payload
     res.status(OK.status).json(success(user, {token }))
-    
   })
 
   authenticate(req, res,next)

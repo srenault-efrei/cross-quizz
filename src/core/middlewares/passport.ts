@@ -23,12 +23,12 @@ passport.use(
         const user = await User.findOne({ email })
 
         if (!user) {
-          next(`Sorry email ${email} dosen't exist`, null)
+          next(`Sorry, login is incorrect 💩💩`, null)
           return
         }
 
         if (!user.checkPassword(password)) {
-          next(`Sorry password is incorrect`, null)
+          next(`Sorry, login is incorrect 💩💩 `, null)
           return
         }
 

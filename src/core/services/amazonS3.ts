@@ -67,6 +67,7 @@ export async function createAwsFolder(path: string ) : never | Promise<void> {
   ACL:'public-read',
 };
 
+
 //On retourne une new promise au top de la fonction pour qu'elle soit gerée dans le try catch qui l'appel
 return new Promise((resolve,reject) => {
   s3.headObject(HEAD_PARAMS, function (err, _) {  
@@ -134,6 +135,23 @@ export async function deleteAwsObject(path:string)  : never | Promise<void> {
     })
   })
  
+  }
+
+  export async function copyAwsObject(path:string,newName:string)  : never | Promise<void> {
+    const s3 = getS3()
+      return new Promise((resolve,reject)=>{
+     // copy the  object
+     s3.copyObject({
+      Bucket: BUCKET_NAME, 
+      CopySource: `${BUCKET_NAME}/${path}`, 
+      Key: newName
+     },(err,data) => {
+       if( err){
+         reject(err)
+       }
+     })
+   
+    })
   }
 
 export async function existsAwsObject(path:string) : Promise<number> {

@@ -23,7 +23,8 @@
     }
   },
   "include": [
-    "src"
+    "src",
+    "definitions.d.ts"
   ],
   "exclude": [
     "node_modules"

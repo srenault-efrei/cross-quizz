@@ -1,5 +1,5 @@
 import { Router, Request, Response, response } from 'express'
-import { isEmpty } from 'lodash'
+import { indexOf, isEmpty, lastIndexOf } from 'lodash'
 import bcrypt from 'bcryptjs'
 import { error, success } from '../../../core/helpers/response'
 import { BAD_REQUEST, CREATED, OK } from '../../../core/constants/api'
@@ -7,29 +7,25 @@ import User from '@/core/db/models/User'
 import Bucket from '@/core/db/models/Bucket'
 import crypto from 'crypto'
 import {  sendMail } from '@/core/libs/utils'
-import fs from 'fs'
 import path from 'path'
 import { getRepository } from 'typeorm'
-import { createAwsFolder, deleteAwsObject, existsAwsObject, renameAwsObject, uploadFile } from '@/core/services/amazonS3'
+import { copyAwsObject, createAwsFolder, deleteAwsObject, existsAwsObject, renameAwsObject, uploadFile } from '@/core/services/amazonS3'
 import { MY_S3_DATA_PATH } from '@/core/constants/s3'
-import { createLocalFolder, deleteLocalFolder, existsLocalObject, renameLocalFolder } from '@/core/local_storage'
-import multer from 'multer'
-import {  upload } from '@/core/local_storage/multer'
+import { copyLocalObject, createLocalFile, createLocalFolder, deleteLocalFile, deleteLocalFolder, existsLocalObject, renameLocalFolder } from '@/core/storage/localStorage'
+import {  upload } from '@/core/storage/multer'
 import Blob from '@/core/db/models/Blob'
-import { UPLOAD_PATH } from '@/core/constants/local_storage'
 
 const api = Router()
 
 
 
-// api.use('/:uuid', (req,_, next)=> {
-//   const { uuid } = req.params
-  
-//   if (uuid != req.user.uuid){
-//     throw new Error("Your are not authorized")
-//   }
-//   next()
-// })
+ api.use('/:uuid', (req,_, next)=> {
+   const { uuid } = req.params
+   if (uuid != req.user?.uuid){
+    throw new Error("Your are not authorized")
+  }
+  next()
+})
 
 api.get('/:uuid', async (req: Request, res: Response) => {
   const { uuid } = req.params
@@ -50,7 +46,7 @@ api.get('/:uuid', async (req: Request, res: Response) => {
 
 api.put('/:uuid/', async (req: Request, res: Response) => {
 
-  const fields = ['firstname', 'lastname', 'email']
+  const fields = ['firstname', 'lastname', ' nickname']
   try {
     const { uuid } = req.params
 
@@ -60,7 +56,7 @@ api.put('/:uuid/', async (req: Request, res: Response) => {
       throw new Error(`Field${isPlural ? 's' : ''} [ ${missings.join(', ')} ] ${isPlural ? 'are' : 'is'} missing`)
     }
 
-    const { firstname, lastname, email } = req.body
+    const { firstname, lastname, nickname } = req.body
     const user: User | undefined = await User.findOne(uuid)
 
     if (user) {
@@ -70,7 +66,7 @@ api.put('/:uuid/', async (req: Request, res: Response) => {
 
       user.firstname = firstname
       user.lastname = lastname
-      user.email = email
+      user.nickname = nickname
 
       await user.save()
       res.status(OK.status).json(success(user))
@@ -125,7 +121,6 @@ api.post('/reset-password/:email', async (req: Request, res: Response) => {
 
 
 // Buckets ////////////////////////
-
 
 api.post('/:uuid/buckets', async (req: Request, res: Response) => {
   try {
@@ -331,7 +326,6 @@ api.head('/:uuid/buckets/:bucket_id', async (req: Request, res: Response) => {
   }
 })
 
-
 // Blob ////////////////////////
 
 api.post('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response) => {
@@ -357,10 +351,13 @@ api.post('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response)
               }
             })
           })
-          single_upload.originalname = single_upload.originalname.replace('','_')
+          single_upload.originalname = single_upload.originalname.replace(' ','_')
           const fullPath= path.join(getObjectPath(uuid,bucket.name),single_upload.originalname)
           if ('NPM_CONFIG_PRODUCTION' in process.env){
             await uploadFile(single_upload,fullPath)
+          }
+          else{
+           await createLocalFile(single_upload.buffer,fullPath)
           }
          let blob = new Blob()
          blob.name= single_upload.originalname
@@ -369,7 +366,7 @@ api.post('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response)
          blob.path = fullPath
          await blob.save()
 
-        res.status(200).json(success(blob))
+        res.status(OK.status).json(success(blob))
 
       }
       else {
@@ -383,6 +380,7 @@ api.post('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response)
       res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
+
 
 
 api.get('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response) => {
@@ -431,14 +429,8 @@ api.get('/:uuid/buckets/:bucket_id/blobs/:blob_id', async (req: Request, res: Re
       .andWhere("bucket.id = :bucket_id", { bucket_id })
       .getOne()
       if(bucket) {
-        const blob: Blob | undefined  = await getRepository(Blob)
-        .createQueryBuilder("blob")
-        .leftJoinAndSelect("blob.bucket", "bucket")
-        .where("blob.bucket.id = :bucket_id", { bucket_id })
-        .andWhere("blob.id = :blob_id", { blob_id })
-        .getOne()
-       
-        if (blob){
+        const blob: Blob | undefined  = await Blob.findOne(blob_id,{relations: ['bucket']})
+        if (blob && blob.bucket == bucket ){
           res.status(OK.status).json(success(blob))
         }
         else{
@@ -457,6 +449,59 @@ api.get('/:uuid/buckets/:bucket_id/blobs/:blob_id', async (req: Request, res: Re
   }
 })
 
+api.get('/:uuid/buckets/:bucket_id/blobs/:blob_id/duplicate', async (req: Request, res: Response) => {
+  try {
+    const { uuid ,bucket_id,blob_id} = req.params
+    const user: User | undefined = await User.findOne(uuid)
+    if (user) {
+      const bucket: Bucket | undefined  = await getRepository(Bucket)
+      .createQueryBuilder("bucket")
+      .leftJoinAndSelect("bucket.owner", "user")
+      .where("bucket.owner.uuid = :uuid", { uuid })
+      .andWhere("bucket.id = :bucket_id", { bucket_id })
+      .getOne()
+      if(bucket) {
+        const blob: Blob | undefined  = await Blob.findOne(blob_id,{relations: ['bucket']})
+        if (blob && blob.bucket == bucket ){
+          let count_nb: number | undefined  = await getRepository(Blob)
+          .createQueryBuilder("blob")
+          .leftJoinAndSelect("blob.bucket", "bucket")
+          .where("blob.bucket.id = :bucket_id", { bucket_id })
+          .andWhere("blob.name like :name", { name:`${blob.name}%` })
+          .getCount() 
+
+          const path = getObjectPath(uuid,blob.path)
+          const newName = blob.name.slice(0, blob.name.lastIndexOf('.')) + ".copy." + count_nb + blob.name.slice(blob.name.lastIndexOf('.'));
+
+          if('NPM_CONFIG_PRODUCTION' in process.env){
+            await copyAwsObject(path,newName)
+          }
+          else{
+            copyLocalObject(path,newName)
+          }
+
+          let newBlob = new Blob()
+          newBlob = blob
+          newBlob.name = newName
+          newBlob.save()
+
+         // res.status(OK.status).json(success(blob))
+        }
+        else{
+          throw new Error('Fichier inexistant')
+        }
+      }
+      else {
+        res.status(BAD_REQUEST.status).json({ 'err': 'bucket inexistant' })
+      }
+    }
+    else {
+      res.status(BAD_REQUEST.status).json({ 'err': 'user inexistant' })
+    }
+  } catch (err) {
+      res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
+  }
+})
 
 api.delete('/:uuid/buckets/:bucket_id/blobs/:blob_id', async (req: Request, res: Response) => {
   try {
@@ -482,7 +527,7 @@ api.delete('/:uuid/buckets/:bucket_id/blobs/:blob_id', async (req: Request, res:
             await deleteAwsObject(blob.path) 
           }
           else{
-            fs.unlinkSync(UPLOAD_PATH+blob.name)
+            deleteLocalFile(blob.path)
           }
           await blob.remove()
           res.status(OK.status).json(success(blob))
