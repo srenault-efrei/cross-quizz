@@ -1,3 +1,4 @@
+import { log } from 'console'
 import fs from 'fs'
 
 export function createLocalFolder(newFolderPath: string) : never | void {
@@ -29,12 +30,11 @@ export function createLocalFolder(newFolderPath: string) : never | void {
   }
 
   export function copyLocalObject(path:string , newName:string) : never | void {
-    if (!fs.existsSync(path)) {
-        throw new Error('Chemin  inexistant')
-    }
-    else {
+
+
+
       fs.copyFileSync(path , newName)
-    }
+    
   }
 
   export function existsLocalObject(path:string) : number {

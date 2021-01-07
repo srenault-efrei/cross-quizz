@@ -5,7 +5,6 @@ import { error, success } from '../../../core/helpers/response'
 import { BAD_REQUEST, CREATED, OK } from '../../../core/constants/api'
 import User from '@/core/db/models/User'
 import Bucket from '@/core/db/models/Bucket'
-
 import path from 'path'
 import { getRepository } from 'typeorm'
 import { copyAwsObject, createAwsFolder, deleteAwsObject, existsAwsObject, renameAwsObject, uploadFile } from '@/core/services/amazonS3'
@@ -13,6 +12,7 @@ import { MY_S3_DATA_PATH } from '@/core/constants/s3'
 import { copyLocalObject, createLocalFile, createLocalFolder, deleteLocalFile, deleteLocalFolder, existsLocalObject, renameLocalFolder } from '@/core/storage/localStorage'
 import {  upload } from '@/core/storage/multer'
 import Blob from '@/core/db/models/Blob'
+import { log } from 'console'
 
 const api = Router()
 
@@ -45,7 +45,7 @@ api.get('/:uuid', async (req: Request, res: Response) => {
 
 api.put('/:uuid/', async (req: Request, res: Response) => {
 
-  const fields = ['firstname', 'lastname', ' nickname']
+  const fields = ['firstname', 'lastname', 'nickname']
   try {
     const { uuid } = req.params
 
@@ -365,10 +365,11 @@ api.get('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response) 
   try {
     const { uuid ,bucket_id} = req.params
     const user: User | undefined = await User.findOne(uuid)
-    if (user) {
+    if (user) {      
       const bucket: Bucket | undefined  = await getRepository(Bucket)
       .createQueryBuilder("bucket")
       .leftJoinAndSelect("bucket.owner", "user")
+      .leftJoinAndSelect("bucket.blobs", "blob")
       .where("bucket.owner.uuid = :uuid", { uuid })
       .andWhere("bucket.id = :bucket_id", { bucket_id })
       .getOne()
@@ -427,7 +428,7 @@ api.get('/:uuid/buckets/:bucket_id/blobs/:blob_id', async (req: Request, res: Re
   }
 })
 
-api.get('/:uuid/buckets/:bucket_id/blobs/:blob_id/duplicate', async (req: Request, res: Response) => {
+api.post('/:uuid/buckets/:bucket_id/blobs/:blob_id/duplicate', async (req: Request, res: Response) => {
   try {
     const { uuid ,bucket_id,blob_id} = req.params
     const user: User | undefined = await User.findOne(uuid)
@@ -440,7 +441,7 @@ api.get('/:uuid/buckets/:bucket_id/blobs/:blob_id/duplicate', async (req: Reques
       .getOne()
       if(bucket) {
         const blob: Blob | undefined  = await Blob.findOne(blob_id,{relations: ['bucket']})
-        if (blob && blob.bucket == bucket ){
+        if (blob && blob.bucket && blob.bucket.id == bucket.id){
           let count_nb: number | undefined  = await getRepository(Blob)
           .createQueryBuilder("blob")
           .leftJoinAndSelect("blob.bucket", "bucket")
@@ -448,25 +449,26 @@ api.get('/:uuid/buckets/:bucket_id/blobs/:blob_id/duplicate', async (req: Reques
           .andWhere("blob.name like :name", { name:`${blob.name}%` })
           .getCount() 
 
-          const path = getObjectPath(uuid,blob.path)
-          const newName = blob.name.slice(0, blob.name.lastIndexOf('.')) + ".copy." + count_nb + blob.name.slice(blob.name.lastIndexOf('.'));
-
+          const chemin = blob.path
+          const newName = blob.name.slice(0, blob.name.lastIndexOf('.')) + ".copy." + count_nb + blob.name.slice(blob.name.lastIndexOf('.')) as string
+          const newPath = path.join(chemin.slice(0, chemin.lastIndexOf("/") ) ,newName) as string
+          
           if('NPM_CONFIG_PRODUCTION' in process.env){
-            await copyAwsObject(path,newName)
+            await copyAwsObject(chemin,newPath)
           }
           else{
-            copyLocalObject(path,newName)
+            copyLocalObject(chemin,newPath)
           }
 
           let newBlob = new Blob()
           newBlob = blob
           newBlob.name = newName
+          newBlob.path= newPath
           newBlob.save()
-
-         // res.status(OK.status).json(success(blob))
+         res.status(OK.status).json(success(newBlob))
         }
         else{
-          throw new Error('Fichier inexistant')
+          throw new Error("fichier inexistant")
         }
       }
       else {
@@ -528,8 +530,8 @@ api.delete('/:uuid/buckets/:bucket_id/blobs/:blob_id', async (req: Request, res:
 
 
 
-export function getObjectPath(uuid:string,name:string){
-  return path.join(MY_S3_DATA_PATH, `${uuid}/${name}/`)
+export function getObjectPath(uuid:string,name:string,forBlob=false){
+  return forBlob?  path.join(MY_S3_DATA_PATH, `${uuid}/${name}`) : path.join(MY_S3_DATA_PATH, `${uuid}/${name}/`)
 }
 
 
