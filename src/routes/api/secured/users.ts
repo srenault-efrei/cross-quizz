@@ -442,13 +442,15 @@ api.post('/:uuid/buckets/:bucket_id/blobs/:blob_id/duplicate', async (req: Reque
       if(bucket) {
         const blob: Blob | undefined  = await Blob.findOne(blob_id,{relations: ['bucket']})
         if (blob && blob.bucket && blob.bucket.id == bucket.id){
+          const ext = path.extname(blob.name);
+          const baseName =  path.basename(blob.name, ext)
           let count_nb: number | undefined  = await getRepository(Blob)
           .createQueryBuilder("blob")
           .leftJoinAndSelect("blob.bucket", "bucket")
           .where("blob.bucket.id = :bucket_id", { bucket_id })
-          .andWhere("blob.name like :name", { name:`${blob.name}%` })
-          .getCount() 
-
+          .andWhere("blob.name like :name ", { name:`%${baseName}%${ext}` })
+          .getCount()  
+ 
           const chemin = blob.path
           const newName = blob.name.slice(0, blob.name.lastIndexOf('.')) + ".copy." + count_nb + blob.name.slice(blob.name.lastIndexOf('.')) as string
           const newPath = path.join(chemin.slice(0, chemin.lastIndexOf("/") ) ,newName) as string
@@ -461,11 +463,13 @@ api.post('/:uuid/buckets/:bucket_id/blobs/:blob_id/duplicate', async (req: Reque
           }
 
           let newBlob = new Blob()
-          newBlob = blob
           newBlob.name = newName
           newBlob.path= newPath
-          newBlob.save()
-         res.status(OK.status).json(success(newBlob))
+          newBlob.size = blob.size
+          newBlob.bucket = bucket
+          await newBlob.save()
+          res
+          res.status(OK.status).json(success(newBlob))
         }
         else{
           throw new Error("fichier inexistant")
