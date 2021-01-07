@@ -50,8 +50,8 @@ export default class Database {
       password,
       database,
       entities: [User,Bucket,Blob],
-      dropSchema: true,
-      synchronize: true,
+      dropSchema: false,
+      synchronize: false,
       logging: false,
     })
 

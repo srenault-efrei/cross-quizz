@@ -1,3 +1,4 @@
+import { isLength } from "lodash"
 import User  from "../db/models/User"
 
 const users = [
@@ -23,7 +24,12 @@ const users = [
 ]
 
 export async function addUsers(): Promise<never | void> {
+    const tryUser =await  User.find()
+    if (tryUser && tryUser.length == users.length){
+        return
+    }
 
+    
     for (const user of users) {
         const u = new User()
         if (u.uuid !== user.uuid) {
