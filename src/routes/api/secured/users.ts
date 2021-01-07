@@ -5,8 +5,7 @@ import { error, success } from '../../../core/helpers/response'
 import { BAD_REQUEST, CREATED, OK } from '../../../core/constants/api'
 import User from '@/core/db/models/User'
 import Bucket from '@/core/db/models/Bucket'
-import crypto from 'crypto'
-import {  sendMail } from '@/core/libs/utils'
+
 import path from 'path'
 import { getRepository } from 'typeorm'
 import { copyAwsObject, createAwsFolder, deleteAwsObject, existsAwsObject, renameAwsObject, uploadFile } from '@/core/services/amazonS3'
@@ -91,27 +90,6 @@ api.delete('/:uuid', async (req: Request, res: Response) => {
     }
     else {
       res.status(BAD_REQUEST.status).json({ 'err': 'user inexistant' })
-    }
-  } catch (err) {
-    res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
-  }
-})
-
-api.post('/reset-password/:email', async (req: Request, res: Response) => {
-  const { email } = req.params
-  try {
-    const user: User | undefined = await User.findOne({ email: email })
-    if (user) {
-      //cree une chaine de caractere sur 4 bytes aleatoire que l'on cast en hexa pour la complexité
-      const newPass = crypto.randomBytes(4).toString('HEX')
-      const body = `<b>Hello ${user.nickname}</b><br/>Nouveau Mot de passe :${newPass}<br/>A bientot sur notre site 💩`
-      await sendMail(user, 'Nouveau mot de passe', body)
-      user.password = bcrypt.hashSync(newPass, User.SALT_ROUND)
-      await user.save()
-      res.status(OK.status).json({ 'message': 'Un mail vous a été envoyé sur votre adresse mail' })
-    }
-    else {
-      throw new Error('Utilisateur non trouvé').stack
     }
   } catch (err) {
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
