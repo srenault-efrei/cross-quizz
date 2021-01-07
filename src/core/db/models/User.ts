@@ -12,6 +12,7 @@ import {Entity,
 
 import bcrypt from 'bcryptjs'
 import Bucket from './Bucket'
+import { log } from 'console'
 
 
 
@@ -59,7 +60,7 @@ export default class User extends BaseEntity {
     if (!this.password) {
       throw new Error('Password is not defined')
     }
-
+    
     this.password = bcrypt.hashSync(this.password, User.SALT_ROUND)
   }
 
@@ -67,6 +68,7 @@ export default class User extends BaseEntity {
    * Methods
    */
   public checkPassword(uncryptedPassword: string): boolean {
+    
     return bcrypt.compareSync(uncryptedPassword, this.password)
   }
 
