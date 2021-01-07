@@ -56,7 +56,7 @@ api.post('/signin', async (req: Request, res: Response,next) => {
       const isPlural = missings.length > 1
       throw new Error(`Field${isPlural ? 's' : ''} [ ${missings.join(', ')} ] ${isPlural ? 'are' : 'is'} missing`)
     }
-    
+
     const authenticate = passport.authenticate('local', { session: false }, (errorMessage, user) => {
       if (errorMessage) {
         res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, new Error(errorMessage)))
@@ -65,7 +65,7 @@ api.post('/signin', async (req: Request, res: Response,next) => {
       const payload : UserPayload = { uuid: user.uuid, firstname: user.firstname }
       const token = jwt.sign(payload, process.env.JWT_ENCRYPTION as string)
       req.user  = payload
-      res.status(OK.status).json({user:payload,token })
+      res.status(OK.status).json({user,token })
     })
 
     authenticate(req, res,next)
