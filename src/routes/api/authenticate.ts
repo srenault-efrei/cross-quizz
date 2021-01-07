@@ -38,7 +38,7 @@ api.post('/signup', async (req: Request, res: Response) => {
     await sendMail(user,'Identifiants',body)
     const payload = { uuid: user.uuid, firstname }
     const token = jwt.sign(payload, process.env.JWT_ENCRYPTION as string)
-    res.status(OK.status).json({user,token })
+    res.status(CREATED.status).json(success(user, { token }))
   } catch (err) {
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
@@ -48,14 +48,14 @@ api.post('/signup', async (req: Request, res: Response) => {
 
 
 api.post('/signin', async (req: Request, res: Response,next) => {
-  const fields = ['email', 'password']
-  try{
-    const missings = fields.filter((field: string) => !req.body[field])
-
-    if (!isEmpty(missings)) {
-      const isPlural = missings.length > 1
-      throw new Error(`Field${isPlural ? 's' : ''} [ ${missings.join(', ')} ] ${isPlural ? 'are' : 'is'} missing`)
-    }
+    const fields = ['email', 'password']
+    try{
+      const missings = fields.filter((field: string) => !req.body[field])
+  
+      if (!isEmpty(missings)) {
+        const isPlural = missings.length > 1
+        throw new Error(`Field${isPlural ? 's' : ''} [ ${missings.join(', ')} ] ${isPlural ? 'are' : 'is'} missing`)
+      }
 
     const authenticate = passport.authenticate('local', { session: false }, (errorMessage, user) => {
       if (errorMessage) {
@@ -65,13 +65,13 @@ api.post('/signin', async (req: Request, res: Response,next) => {
       const payload : UserPayload = { uuid: user.uuid, firstname: user.firstname }
       const token = jwt.sign(payload, process.env.JWT_ENCRYPTION as string)
       req.user  = payload
-      res.status(OK.status).json({user,token })
+      res.status(OK.status).json(success(user, {token }))
     })
 
     authenticate(req, res,next)
   }
   catch (err){
-    res.status(BAD_REQUEST.status).json(error(BAD_REQUEST,err))
+    res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
 
