@@ -374,9 +374,13 @@ api.get('/:uuid/buckets/:bucket_id/blobs/', async (req: Request, res: Response) 
       .andWhere("bucket.id = :bucket_id", { bucket_id })
       .getOne()
       if(bucket) {
-   
+        const blobs :  Blob[] | undefined  = await getRepository(Blob)
+        .createQueryBuilder("blob")
+        .leftJoinAndSelect("blob.bucket", "bucket")
+        .where("bucket.id = :bucket_id", { bucket_id })
+        .getMany()
         if(bucket.blobs){
-          res.status(OK.status).json(bucket.blobs)
+          res.status(OK.status).json(blobs)
         }
         else{
           throw new Error('aucun blobs trouvés pour ce bucket')
