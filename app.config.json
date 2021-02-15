@@ -4,10 +4,6 @@
     "HOST",
     "PORT",
     "DATABASE_URL",
-    "JWT_ENCRYPTION",
-    "SENDGRID_API_KEY",
-    "EMAIL_SENDER",
-    "AWSID",
-    "AWSSECRET"
+    "JWT_ENCRYPTION"
   ]
 }

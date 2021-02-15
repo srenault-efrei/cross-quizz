@@ -1,4 +1,5 @@
-import {Entity,
+import {
+  Entity,
   PrimaryGeneratedColumn,
   Column,
   BaseEntity,
@@ -11,23 +12,14 @@ import {Entity,
 } from 'typeorm'
 
 import bcrypt from 'bcryptjs'
-import Bucket from './Bucket'
-import { log } from 'console'
-
-
-
 
 @Entity()
-@TableInheritance({ column: { type: "varchar", name: "type" } })
+@TableInheritance({ column: { type: 'varchar', name: 'type' } })
 export default class User extends BaseEntity {
-
   public static SALT_ROUND = 8
 
   @PrimaryGeneratedColumn('uuid')
   uuid!: string
-
-  @OneToMany( type => Bucket , bucket => bucket.owner )
-  buckets!:Bucket[]
 
   @Column({ nullable: false, unique: true })
   email!: string
@@ -50,8 +42,6 @@ export default class User extends BaseEntity {
   @UpdateDateColumn()
   updatedAt!: string
 
-
-
   /**
    * Hooks
    */
@@ -60,7 +50,7 @@ export default class User extends BaseEntity {
     if (!this.password) {
       throw new Error('Password is not defined')
     }
-    
+
     this.password = bcrypt.hashSync(this.password, User.SALT_ROUND)
   }
 
@@ -68,14 +58,13 @@ export default class User extends BaseEntity {
    * Methods
    */
   public checkPassword(uncryptedPassword: string): boolean {
-    
     return bcrypt.compareSync(uncryptedPassword, this.password)
   }
 
   public toJSON(): Partial<User> {
     const json: Partial<User> = Object.assign({}, this)
     delete json.password
-   /* const { password, ...jsonUser } = json*/
+    /* const { password, ...jsonUser } = json*/
     return json
   }
 }

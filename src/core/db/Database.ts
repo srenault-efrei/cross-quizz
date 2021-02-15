@@ -1,18 +1,13 @@
 import dotenv from 'dotenv'
 import { createConnection, Connection } from 'typeorm'
 import User from './../db/models/User'
-import Bucket from './../db/models/Bucket'
 import { addUsers } from '../fixtures/users'
-import Blob from './models/Blob'
-
-
-
 
 export default class Database {
   private static _instance: Database | null = null
   private _connection: Connection | null = null
 
-  private constructor() { }
+  private constructor() {}
 
   public static getInstance(): Database {
     if (!Database._instance) {
@@ -23,12 +18,9 @@ export default class Database {
   }
 
   public addFixtures(): void {
-  
     setTimeout(async function () {
       addUsers()
-    }, 2000);
-
-
+    }, 2000)
   }
 
   public async authenticate(): Promise<Connection | never> {
@@ -41,7 +33,6 @@ export default class Database {
 
     const [, , username, password, host, port, database] = founded
 
-
     this._connection = await createConnection({
       type: 'postgres',
       host,
@@ -49,9 +40,9 @@ export default class Database {
       username,
       password,
       database,
-      entities: [User,Bucket,Blob],
-      dropSchema: false,
-      synchronize: false,
+      entities: [User],
+      dropSchema: true,
+      synchronize: true,
       logging: false,
     })
 

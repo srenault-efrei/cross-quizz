@@ -1,26 +1,17 @@
 import 'reflect-metadata'
-import fs from 'fs'
-import os from 'os'
-
-import { argv, prelude, mlog } from './core/libs/utils'
-import Server from './Server'
-import { UPLOAD_PATH } from './core/constants/local_storage'
+import { prelude, mlog } from './core/libs/utils'
+import Server from './server'
+import dotenv from 'dotenv'
 
 const main = async (): Promise<void> => {
   try {
     // Every beautiful story have a begining...
     prelude()
 
-    const port = argv[0] || (process.env.PORT as string)
-    const host = argv[1] || (process.env.HOST as string)
+    dotenv.config()
 
-    if ('NODE_PRODUCTION' in process.env == false) {
-           if (!fs.existsSync(UPLOAD_PATH)) {
-              fs.mkdirSync(UPLOAD_PATH)
-           }
-      
-       }
-
+    const host: string = process.env.HOST as string
+    const port = process.env.PORT as string
     const server = new Server(host, parseInt(port, 10))
     await server.run()
   } catch (err) {
