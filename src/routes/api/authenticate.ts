@@ -9,7 +9,7 @@ import User from '@/core/db/models/User'
 const api = Router()
 
 api.post('/signup', async (req: Request, res: Response) => {
-  const fields = ['firstname', 'lastname', 'email', 'password', 'passwordConfirmation']
+  const fields = ['firstname', 'lastname', 'email', 'password', 'passwordConfirmation', 'phone']
 
   try {
     const missings = fields.filter((field: string) => !req.body[field])
@@ -18,14 +18,19 @@ api.post('/signup', async (req: Request, res: Response) => {
       const isPlural = missings.length > 1
       throw new Error(`Field${isPlural ? 's' : ''} [ ${missings.join(', ')} ] ${isPlural ? 'are' : 'is'} missing`)
     }
-    const { firstname, lastname, email, password, passwordConfirmation } = req.body
+    const { firstname, lastname, email, password, passwordConfirmation, phone, glutenLevel } = req.body
     if (password !== passwordConfirmation) {
       throw new Error("Password doesn't match")
     }
 
     const user = new User()
 
-    ;(user.firstname = firstname), (user.lastname = lastname), (user.email = email), (user.password = password)
+    ;(user.firstname = firstname),
+      (user.lastname = lastname),
+      (user.email = email),
+      (user.password = password),
+      (user.phone = phone),
+      (user.glutenLevel = glutenLevel)
 
     await user.save()
     const payload = { uuid: user.uuid, firstname }

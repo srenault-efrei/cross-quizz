@@ -32,7 +32,7 @@ export default class User extends BaseEntity {
   @Column({ nullable: false })
   phone!: string
 
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   glutenLevel!: string
 
   @CreateDateColumn()
