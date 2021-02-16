@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import users from './users'
-import products from './products'
+import products from './product'
 
 const api = Router()
 

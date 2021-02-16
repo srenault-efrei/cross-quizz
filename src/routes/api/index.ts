@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express'
 import auth from './authenticate'
 import secured from './secured'
 import passport from 'passport'
-import resetPassword from './resetPassword'
 import cors from 'cors'
 
 const api = Router()
@@ -19,7 +18,6 @@ api.get('/', (req: Request, res: Response) => {
 })
 
 api.use('/authenticate', auth)
-api.use('/resetPassword', resetPassword)
 
 api.use('/', passport.authenticate('jwt', { session: false }), secured)
 
@@ -33,9 +31,9 @@ api.use('/', passport.authenticate('jwt', { session: false }), secured)
  
  -------------------- Users In Secured -----------------
 
-  /api/users/:uuid [GET] 
-  /api/users/:uuid [PUT] 
-  /api/users/:uuid [DELETE] 
+  /api/users/:uuid [GET] (OK)
+  /api/users/:uuid [PUT] (OK)
+  /api/users/:uuid [DELETE] (OK)
   
 ---------------- Users action on Products in Secured ----------------
 
@@ -49,7 +47,7 @@ api.use('/', passport.authenticate('jwt', { session: false }), secured)
 
 ----------------- ResetPassword no in Secured ------------
 
-  /api/users/:email/resetPassword [PUT] 
+  /api/users/:email/resetPassword [PUT] (OK)
  
  */
 export default api
