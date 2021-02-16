@@ -5,16 +5,12 @@ import {
   BaseEntity,
   CreateDateColumn,
   UpdateDateColumn,
-  TableInheritance,
   BeforeInsert,
-  OneToMany,
-  AfterUpdate,
 } from 'typeorm'
 
 import bcrypt from 'bcryptjs'
 
 @Entity()
-@TableInheritance({ column: { type: 'varchar', name: 'type' } })
 export default class User extends BaseEntity {
   public static SALT_ROUND = 8
 
@@ -31,10 +27,13 @@ export default class User extends BaseEntity {
   firstname!: string
 
   @Column({ nullable: false })
-  nickname!: string
+  lastname!: string
 
   @Column({ nullable: false })
-  lastname!: string
+  phone!: string
+
+  @Column({ nullable: false })
+  glutenLevel!: string
 
   @CreateDateColumn()
   createdAt!: string

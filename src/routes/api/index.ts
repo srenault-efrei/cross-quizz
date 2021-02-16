@@ -9,7 +9,7 @@ api.use(cors())
 
 api.get('/', (req: Request, res: Response) => {
   res.json({
-    hello: 'From mys3-Mj',
+    hello: 'hello world',
     meta: {
       status: 'running',
       version: '1.0.0',
@@ -21,12 +21,28 @@ api.use('/authenticate', auth)
 api.use('/', passport.authenticate('jwt', { session: false }), secured)
 
 /**
- *
- * /api
- * /api/authenticate/signin
- * /api/authenticate/signup
- * /api/users/[:id] GET | POST | PUT | DELETE
- * /api/users/:userId/posts/[:id] GET | POST | PUT | DELETE
- *
+    ---------------------Home --------------------
+  /api [GET]  
+  ---------------------Authenticate --------------------
+  
+  /api/authenticate/signin [POST] 
+  /api/authenticate/signup [POST] 
+ 
+ -------------------- Users In Secured -----------------
+
+  /api/users/ [GET] 
+  /api/users/:uuid [PUT] 
+  /api/users/:uuid [DELETE] 
+  
+---------------- Products in Secured ----------------
+
+  /api/users/products [POST] 
+  /api/users/products [GET] 
+  /api/users/products/:id [DELETE] 
+  
+----------------- ResetPassword no in Secured ------------
+
+  /api/users/resetPassword [PUT] 
+ 
  */
 export default api
