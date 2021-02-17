@@ -29,7 +29,6 @@ export default class Server {
       process.exit(-1)
     }
 
-
     mlog('🖖 Database successfully authenticated', 'success')
     this._app = express()
 
@@ -43,7 +42,7 @@ export default class Server {
   public async run(): Promise<void> {
     await this._initialize()
 
-    this._app?.listen(this._port, () => {
+    this._app?.listen(this._port || 5000, () => {
       mlog(`✨ Server is listening on ${this._host}:${this._port}`)
     })
   }
