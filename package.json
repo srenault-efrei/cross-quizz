@@ -5,11 +5,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "yarn nodemon",
-    "test": "yarn test:type",
-    "test:type": "yarn tsc",
-    "lint": "yarn eslint src/**/*.ts",
-    "build": "yarn babel src/ --out-dir .dist --extensions '.ts' --quiet",
-    "start": "yarn build && node .dist/main"
+    "start": "yarn build && node .dist/main",
+    "clean": "yarn rimraf .dist",
+    "format": "yarn prettier --write \"src/**/*.ts*\" --loglevel silent",
+    "build": "yarn clean && yarn babel src/ --out-dir .dist --extensions '.ts' --quiet"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
@@ -48,8 +47,6 @@
   },
   "dependencies": {
     "@types/cors": "^2.8.6",
-    "@types/nodemailer-sendgrid": "^1.0.0",
-    "aws-sdk": "^2.807.0",
     "bcryptjs": "^2.4.3",
     "chalk": "^4.0.0",
     "cors": "^2.8.5",
@@ -59,15 +56,13 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
-    "multer": "^1.4.2",
     "node-fetch": "^2.6.1",
-    "nodemailer": "^6.4.16",
-    "nodemailer-sendgrid": "^1.0.3",
     "passport": "^0.4.1",
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
     "pg": "^8.0.0",
     "reflect-metadata": "^0.1.13",
+    "rimraf": "^3.0.2",
     "rxjs": "^6.6.3",
     "typeorm": "^0.2.24"
   }

@@ -5,8 +5,7 @@ import {
   BaseEntity,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToMany,
-  JoinTable,
+  ManyToOne,
 } from 'typeorm'
 import User from './User'
 
@@ -33,9 +32,8 @@ export default class Product extends BaseEntity {
   @UpdateDateColumn()
   updatedAt!: string
 
-  @ManyToMany(() => User)
-  @JoinTable()
-  users!: User[]
+  @ManyToOne(() => User, (user) => user.products)
+  user!: User
 
   public toJSON(): Partial<Product> {
     const json: Partial<Product> = Object.assign({}, this)
