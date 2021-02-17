@@ -1,4 +1,3 @@
-import User from '../db/models/User'
 import UsersProducts from '../db/models/UsersProducts'
 
 const tabUsersProducts = [
