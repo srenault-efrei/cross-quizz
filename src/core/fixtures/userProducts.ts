@@ -40,6 +40,7 @@ export async function addUsersProducts(): Promise<never | void> {
   for (const el of tabUsersProducts) {
     const up = new UsersProducts()
     if (up.id !== el.id) {
+      up.id = el.id
       up.barCode = el.barCode
       up.userId = el.userId
     }

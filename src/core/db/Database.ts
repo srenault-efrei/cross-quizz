@@ -23,11 +23,18 @@ export default class Database {
 
   public addFixtures(): void {
     addUsers()
-    addProducts()
-    // addUsersProducts()
+   
+    setTimeout(async function () {
+      addProducts()
+    }, 2000);
+    
+    setTimeout(async function () {
+      addUsersProducts()
+    }, 3000);
+
   }
 
-  public async authenticate(): Promise<Connection | never> {
+  public async authenticate(): Promise<Connection | never | null> {
     dotenv.config()
 
     const founded = (process.env.DATABASE_URL as string).match(/^(postgres):\/\/(.*):(.*)@(.*):(\d+)\/(.*)$/)
@@ -36,27 +43,45 @@ export default class Database {
     }
 
     const [, , username, password, host, port, database] = founded
+  
 
-    this._connection = await createConnection({
-      type: 'postgres',
-      host,
-      port: parseInt(port),
-      username,
-      password,
-      database,
-      entities: [User, Product, UsersProducts],
-      dropSchema: true,
-      synchronize: true,
-      logging: false,
-      ssl:true,
-      extra: {
-        ssl: {
-          rejectUnauthorized: false
+    if(process.env.ENVIRONMENT === "DEV"){
+      this._connection = await createConnection({
+        type: 'postgres',
+        host,
+        port: parseInt(port),
+        username,
+        password,
+        database,
+        entities: [User, Product, UsersProducts],
+        dropSchema: true,
+        synchronize: true,
+        logging: false,
+      })
+    }else{
+      this._connection = await createConnection({
+        type: 'postgres',
+        host,
+        port: parseInt(port),
+        username,
+        password,
+        database,
+        entities: [User, Product, UsersProducts],
+        dropSchema: true,
+        synchronize: true,
+        logging: false,
+        ssl:true,
+        extra: {
+          ssl: {
+            rejectUnauthorized: false
+          }
         }
-      }
-    })
+      })
+    }
+
+   
 
     this.addFixtures()
-    return this._connection
+    return this._connection 
   }
 }
