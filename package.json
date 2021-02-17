@@ -1,4 +1,8 @@
 {
+  "name": "@dlmvp/server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
   "scripts": {
     "dev": "yarn nodemon",
     "start": "yarn build && node .dist/main",
