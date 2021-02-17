@@ -1,9 +1,11 @@
 import dotenv from 'dotenv'
 import { createConnection, Connection } from 'typeorm'
 import User from './../db/models/User'
+import UsersProducts from './models/UsersProducts'
 import { addUsers } from '../fixtures/users'
 import { addProducts } from '../fixtures/products'
 import Product from './models/Product'
+import { addUsersProducts } from '../fixtures/userProducts'
 
 export default class Database {
   private static _instance: Database | null = null
@@ -21,10 +23,8 @@ export default class Database {
 
   public addFixtures(): void {
     addUsers()
-
-    setTimeout(async function () {
-      addProducts()
-    }, 2000)
+    addProducts()
+    addUsersProducts()
   }
 
   public async authenticate(): Promise<Connection | never> {
@@ -44,7 +44,7 @@ export default class Database {
       username,
       password,
       database,
-      entities: [User, Product],
+      entities: [User, Product, UsersProducts],
       dropSchema: true,
       synchronize: true,
       logging: false,
