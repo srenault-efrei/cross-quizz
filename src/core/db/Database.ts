@@ -48,6 +48,7 @@ export default class Database {
       dropSchema: true,
       synchronize: true,
       logging: false,
+      ssl:true
     })
 
     this.addFixtures()
