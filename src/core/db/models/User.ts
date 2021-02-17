@@ -6,9 +6,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   BeforeInsert,
+  OneToMany,
 } from 'typeorm'
 
 import bcrypt from 'bcryptjs'
+import Product from './Product'
 
 @Entity()
 export default class User extends BaseEntity {
@@ -40,6 +42,9 @@ export default class User extends BaseEntity {
 
   @UpdateDateColumn()
   updatedAt!: string
+
+  @OneToMany(() => Product, (product) => product.user)
+  products!: Product[]
 
   /**
    * Hooks

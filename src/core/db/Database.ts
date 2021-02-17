@@ -21,7 +21,10 @@ export default class Database {
 
   public addFixtures(): void {
     addUsers()
-    addProducts()
+
+    setTimeout(async function () {
+      addProducts()
+    }, 2000)
   }
 
   public async authenticate(): Promise<Connection | never> {
@@ -42,8 +45,8 @@ export default class Database {
       password,
       database,
       entities: [User, Product],
-      dropSchema: false,
-      synchronize: false,
+      dropSchema: true,
+      synchronize: true,
       logging: false,
     })
 
