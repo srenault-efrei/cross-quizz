@@ -24,7 +24,7 @@ export default class Database {
   public addFixtures(): void {
     addUsers()
     addProducts()
-    addUsersProducts()
+    // addUsersProducts()
   }
 
   public async authenticate(): Promise<Connection | never> {
