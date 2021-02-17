@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   BaseEntity,
   CreateDateColumn,
@@ -12,8 +12,8 @@ import User from './User'
 
 @Entity()
 export default class Product extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id!: number
+  @PrimaryColumn()
+  barcode!: string
 
   @Column({ nullable: false })
   product_name!: string
