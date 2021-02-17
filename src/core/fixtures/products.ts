@@ -37,6 +37,7 @@ export async function addProducts(): Promise<never | void> {
       p.product_name = product.product_name
       p.image_url = product.image_url
       p.brand = product.brand
+      p.isGluten = product.isGluten
     }
     await p.save()
   }

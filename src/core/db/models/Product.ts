@@ -27,7 +27,7 @@ export default class Product extends BaseEntity {
   @Column({ nullable: false })
   brand!: string
 
-  @Column({ nullable: false, default: 0 })
+  @Column({ nullable: false, default: 3 })
   isGluten!: number
 
   @CreateDateColumn()
