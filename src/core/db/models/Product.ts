@@ -18,13 +18,13 @@ export default class Product extends BaseEntity {
   product_name!: string
 
   @Column({ nullable: false })
-  image!: string
+  image_url!: string
 
   @Column({ nullable: false })
-  mark!: string
+  brand!: string
 
-  @Column({ nullable: false, default: 'false' })
-  isFavorite!: boolean
+  @Column({ nullable: false, default: 0 })
+  isGluten!: number
 
   @CreateDateColumn()
   createdAt!: string

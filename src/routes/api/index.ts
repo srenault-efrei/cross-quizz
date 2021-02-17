@@ -42,8 +42,7 @@ api.use('/', passport.authenticate('jwt', { session: false }), secured)
 
 ---------------- Products in Secured ----------------
 
-  /api/products/:id [GET] 
-  /api/products/:id [DELETE] 
+  /api/product/:barcode [GET]
 
 ----------------- ResetPassword no in Secured ------------
 
