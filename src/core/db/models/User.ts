@@ -7,6 +7,8 @@ import {
   UpdateDateColumn,
   BeforeInsert,
   OneToMany,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm'
 
 import bcrypt from 'bcryptjs'
@@ -43,8 +45,13 @@ export default class User extends BaseEntity {
   @UpdateDateColumn()
   updatedAt!: string
 
-  @OneToMany(() => Product, (product) => product.user)
-  products!: Product[]
+  // @ManyToMany((type) => Product, { eager: true })
+  // @JoinTable({
+  //   name: 'products_users',
+  //   joinColumns: [{ name: 'uuid_user', referencedColumnName: 'uuid' }, { name: 'isFavorite' }],
+  //   inverseJoinColumns: [{ name: 'bar_code', referencedColumnName: 'barCode' }],
+  // })
+  // products!: Product[]
 
   /**
    * Hooks

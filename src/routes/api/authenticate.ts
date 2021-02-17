@@ -5,6 +5,7 @@ import { BAD_REQUEST, CREATED, OK } from '../../core/constants/api'
 import jwt from 'jsonwebtoken'
 import passport from 'passport'
 import User from '@/core/db/models/User'
+import sendEmail from '../../core/helpers/sendEmail'
 
 const api = Router()
 
@@ -35,6 +36,9 @@ api.post('/signup', async (req: Request, res: Response) => {
     await user.save()
     const payload = { uuid: user.uuid, firstname }
     const token = jwt.sign(payload, process.env.JWT_ENCRYPTION as string)
+    const body = `Bonjour <strong>${firstname}</strong>,<p> votre inscription sur Gluten App est terminée.</p>`
+    const subject = `Inscription Gluten App`
+    sendEmail(body, email, subject)
     res.status(CREATED.status).json(success(user, { token }))
   } catch (err) {
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))

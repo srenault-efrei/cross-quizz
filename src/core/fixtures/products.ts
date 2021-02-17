@@ -1,6 +1,5 @@
 import Product from '../db/models/Product'
-import User from '../db/models/User'
-import { users } from '../fixtures/users'
+
 const products = [
   {
     barcode: '1',

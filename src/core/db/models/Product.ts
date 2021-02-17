@@ -1,17 +1,21 @@
 import {
   Entity,
-  PrimaryColumn,
   Column,
   BaseEntity,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
+  PrimaryColumn,
+  ValueTransformer,
 } from 'typeorm'
-import User from './User'
+
+export const bigint: ValueTransformer = {
+  to: (entityValue: bigint) => entityValue,
+  from: (databaseValue: string): bigint => BigInt(databaseValue),
+}
 
 @Entity()
 export default class Product extends BaseEntity {
-  @PrimaryColumn()
+  @PrimaryColumn('bigint', { transformer: [bigint] })
   barcode!: string
 
   @Column({ nullable: false })
@@ -31,9 +35,6 @@ export default class Product extends BaseEntity {
 
   @UpdateDateColumn()
   updatedAt!: string
-
-  @ManyToOne(() => User, (user) => user.products)
-  user!: User
 
   public toJSON(): Partial<Product> {
     const json: Partial<Product> = Object.assign({}, this)
