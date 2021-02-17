@@ -49,7 +49,7 @@ export default class User extends BaseEntity {
   // @JoinTable({
   //   name: 'products_users',
   //   joinColumns: [{ name: 'uuid_user', referencedColumnName: 'uuid' }, { name: 'isFavorite' }],
-  //   inverseJoinColumns: [{ name: 'bar_code', referencedColumnName: 'barCode' }],
+  //   inverseJoinColumns: [{ name: 'bar_code', referencedColumnName: 'barcode' }],
   // })
   // products!: Product[]
 

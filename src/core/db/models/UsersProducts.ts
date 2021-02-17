@@ -8,7 +8,7 @@ export default class UsersProducts extends BaseEntity {
   id!: number
 
   @Column({ nullable: false })
-  barCode!: number
+  barcode!: number
 
   @Column({ nullable: false })
   userId!: string
@@ -21,7 +21,7 @@ export default class UsersProducts extends BaseEntity {
   user!: User
 
   @ManyToOne((type) => Product)
-  @JoinColumn({ name: 'barCode', referencedColumnName: 'barCode' })
+  @JoinColumn({ name: 'barcode', referencedColumnName: 'barcode' })
   Product!: Product
 
   public toJSON(): Partial<UsersProducts> {

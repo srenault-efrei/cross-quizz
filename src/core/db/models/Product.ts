@@ -16,7 +16,7 @@ export const bigint: ValueTransformer = {
 @Entity()
 export default class Product extends BaseEntity {
   @PrimaryColumn('bigint', { transformer: [bigint] })
-  barcode!: string
+  barcode!: number
 
   @Column({ nullable: false })
   product_name!: string

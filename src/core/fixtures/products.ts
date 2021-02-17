@@ -2,21 +2,21 @@ import Product from '../db/models/Product'
 
 const products = [
   {
-    barcode: '1',
+    barcode: 1234567890123,
     product_name: 'Thai peanut',
     image_url: 'https://static.openfoodfacts.org/images/products/073/762/806/4502/front_en.6.100.jpg',
     brand: 'kitchen',
     isGluten: 0
   },
   {
-    barcode: '2',
+    barcode: 2345678901234,
     product_name: 'Nutella pate a tartiner aux noisettes et au cacao',
     image_url: 'https://static.openfoodfacts.org/images/products/301/762/042/2003/front_fr.248.400.jpg',
     brand: 'ferrero',
     isGluten: 1
   },
   {
-    barcode: '3',
+    barcode: 3456789012345,
     product_name: 'Galettes 4 céréales',
     image_url: 'https://static.openfoodfacts.org/images/products/322/982/079/4631/front_fr.65.400.jpg',
     brand: 'Bjorg',

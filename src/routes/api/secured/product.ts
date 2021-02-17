@@ -9,7 +9,7 @@ import fetch from 'node-fetch'
 const api = Router()
 
 interface NewProduct {
-  barcode: string,
+  barcode: number,
   product_name: string,
   image_url: string,
   brand: string,
@@ -79,7 +79,7 @@ function isGluten(data: any): number {
     }
   })
 
-  // //////////GLUTEN LOGIC////////////////////////
+  // GLUTEN LOGIC//
 
   if (isFreeGlutenLabel && (!isGlutenTracesTag && !isGlutenIngredientsText)) {
     isGluten = 0
