@@ -2,22 +2,25 @@ import Product from '../db/models/Product'
 
 const products = [
   {
-    barCode: 737628064502,
+    barcode: '1234567890123',
     product_name: 'Thai peanut',
-    image: 'https://static.openfoodfacts.org/images/products/073/762/806/4502/front_en.6.100.jpg',
-    mark: 'kitchen',
+    image_url: 'https://static.openfoodfacts.org/images/products/073/762/806/4502/front_en.6.100.jpg',
+    brand: 'kitchen',
+    isGluten: 0
   },
   {
-    barCode: 3017620422003,
+    barcode: '2345678901234',
     product_name: 'Nutella pate a tartiner aux noisettes et au cacao',
-    image: 'https://static.openfoodfacts.org/images/products/301/762/042/2003/front_fr.248.400.jpg',
-    mark: 'ferrero',
+    image_url: 'https://static.openfoodfacts.org/images/products/301/762/042/2003/front_fr.248.400.jpg',
+    brand: 'ferrero',
+    isGluten: 1
   },
   {
-    barCode: 3229820794624,
+    barcode: '3456789012345',
     product_name: 'Galettes 4 céréales',
-    image: 'https://static.openfoodfacts.org/images/products/322/982/079/4631/front_fr.65.400.jpg',
-    mark: 'Bjorg',
+    image_url: 'https://static.openfoodfacts.org/images/products/322/982/079/4631/front_fr.65.400.jpg',
+    brand: 'Bjorg',
+    isGluten: 2
   },
 ]
 
@@ -29,11 +32,12 @@ export async function addProducts(): Promise<never | void> {
 
   for (const product of products) {
     const p = new Product()
-    if (p.barCode !== product.barCode) {
-      p.barCode = product.barCode
+    if (p.barcode !== product.barcode) {
+      p.barcode = product.barcode
       p.product_name = product.product_name
-      p.image = product.image
-      p.mark = product.mark
+      p.image_url = product.image_url
+      p.brand = product.brand
+      p.isGluten = product.isGluten
     }
     await p.save()
   }
