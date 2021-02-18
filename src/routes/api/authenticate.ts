@@ -5,7 +5,7 @@ import { BAD_REQUEST, CREATED, OK } from '../../core/constants/api'
 import jwt from 'jsonwebtoken'
 import passport from 'passport'
 import User from '@/core/db/models/User'
-import sendEmail from '../../core/helpers/sendEmail'
+import sendEmail from '../../core/services/sendEmail'
 
 const api = Router()
 
