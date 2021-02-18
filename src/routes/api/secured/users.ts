@@ -104,20 +104,66 @@ api.get('/:uuid/products', async (req: Request, res: Response) => {
     if (user) {
       const usersProducts: UsersProducts[] | undefined = await UsersProducts.find({ userId: uuid })
       const products: Product[] | undefined = await Product.find({
-        where: { barcode: In(['2345678901234', '1234567890123']) }});
-        //.createQueryBuilder('product')
-        //.where("product.barcode IN (:...barcodes)", { barcodes: ['2345678901234', '1234567890123'] })
-        //.getMany()
+        where: { barcode: In(['2345678901234', '1234567890123']) },
+      })
+      //.createQueryBuilder('product')
+      //.where("product.barcode IN (:...barcodes)", { barcodes: ['2345678901234', '1234567890123'] })
+      //.getMany()
 
       res.status(CREATED.status).json(success(products))
-    }
-    else {
-      res.status(BAD_REQUEST.status).json({ 'err': 'user inexistant' })
+    } else {
+      res.status(BAD_REQUEST.status).json({ err: 'user inexistant' })
     }
   } catch (err) {
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
 
+api.put('/:uuid/users_products/:barcode', async (req: Request, res: Response) => {
+  const { isFavorite } = req.body
+  const { uuid, barcode } = req.params
+  try {
+    const users_products = await getRepository(UsersProducts)
+      .createQueryBuilder('up')
+      .leftJoinAndSelect('up.user', 'user')
+      .leftJoinAndSelect('up.product', 'product')
+      .where('up.userId = :uuid', { uuid })
+      .andWhere('up.barcode = :barcode ', { barcode })
+      .getOne()
+
+    if (users_products) {
+      users_products.isFavorite = isFavorite
+      await users_products.save()
+      res.status(CREATED.status).json(success(users_products))
+    } else {
+      res.status(BAD_REQUEST.status).json({ err: 'users_products not exist' })
+    }
+  } catch (err) {
+    res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
+  }
+})
+
+api.delete('/:uuid/users_products/:barcode', async (req: Request, res: Response) => {
+  const { uuid, barcode } = req.params
+  try {
+    const users_products = await getRepository(UsersProducts)
+      .createQueryBuilder('up')
+      .leftJoinAndSelect('up.user', 'user')
+      .leftJoinAndSelect('up.product', 'product')
+      .where('up.userId = :uuid', { uuid })
+      .andWhere('up.barcode = :barcode ', { barcode })
+      .getOne()
+
+    if (users_products) {
+      users_products.remove()
+      await users_products.save()
+      res.status(CREATED.status).json(success(users_products))
+    } else {
+      res.status(BAD_REQUEST.status).json({ err: 'users_products not exist' })
+    }
+  } catch (err) {
+    res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
+  }
+})
 
 export default api

@@ -35,19 +35,23 @@ api.use('/', passport.authenticate('jwt', { session: false }), secured)
   /api/users/:uuid [PUT] (OK)
   /api/users/:uuid [DELETE] (OK)
   
+
 ---------------- Users action on Products in Secured ----------------
 
-  /api/users/:uuid/product [POST] (Product addition is via /api/product/:barcode route)
-  /api/users/:uuid/products [GET] 
-  /api/users/:uuid/products [DELETE] 
 
----------------- Products in Secured ----------------
-
-  /api/product/:barcode [GET] (WIP)
+  /api/users/:uuid/products/:barcode [GET] (Ajout dans products si il n'existe pas et ajout dans users_products si userId specifié et return le produit) (OK)
+  /api/users/:uuid/users_products [GET] (recupre tous les produits de l'user) (OK)
+  /api/users/:uuid/users_products/:barcode [PUT] (Modifie la variable isFavorite) (OK)
+  /api/users/:uuid/users_products/:barcode [DELETE] (Supprime un produit de la liste du user)(OK)
+  
 
 ----------------- ResetPassword no in Secured ------------
 
-  /api/users/:email/resetPassword [PUT] (OK)
+  /api/resetPassword [PUT] (OK)
  
+  ----------------- Other ------------
+
+  - Envoie de mail avec Mailjet lors de l'inscription (OK)
+  - Envoie sms avec AWS SNS los du resetPassword (A finir)
  */
 export default api
