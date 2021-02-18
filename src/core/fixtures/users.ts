@@ -1,4 +1,5 @@
 import User from '../db/models/User'
+import bcrypt from 'bcryptjs'
 
 export const users = [
   {
@@ -51,7 +52,7 @@ export async function addUsers(): Promise<never | void> {
       u.uuid = user.uuid
       u.firstname = user.firstname
       u.lastname = user.lastname
-      u.password = user.password
+      u.password = bcrypt.hashSync(user.password, 8)
       u.phone = user.phone
       u.glutenLevel = user.glutenLevel
       u.email = user.email
