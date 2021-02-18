@@ -79,7 +79,7 @@ api.get('/:uuid/product/:barcode', async (req: Request, res: Response) => {
 
       if (!product) {
         // If product does not exist (create it)
-        const response = await fetch(`${process.env.DATABASE_URL}/${barcode}`)
+        const response = await fetch(`${process.env.OPENFOODFACT_API_URL}/${barcode}`)
         const data = await response.json()
 
         if (data.status) {
