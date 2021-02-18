@@ -60,5 +60,4 @@ api.delete('/:uuid', async (req: Request, res: Response) => {
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
-
 export default api
