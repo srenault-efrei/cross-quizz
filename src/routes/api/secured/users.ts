@@ -6,9 +6,9 @@ import { BAD_REQUEST, CREATED, OK } from '../../../core/constants/api'
 import User from '../../../core/db/models/User'
 import Product from '../../../core/db/models/Product'
 import UsersProducts from '../../../core/db/models/UsersProducts'
-import generator from 'generate-password'
-import { getRepository, In } from 'typeorm'
+import { getRepository } from 'typeorm'
 import fetch from 'node-fetch'
+import { getProductInfoFromOpenFoodFact, setNewProduct, ProductInterface } from '@/core/helpers/users'
 
 const api = Router()
 
@@ -65,7 +65,7 @@ api.delete('/:uuid', async (req: Request, res: Response) => {
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
-    
+
 // PRODUCT //////////
 
 api.get('/:uuid/product/:barcode', async (req: Request, res: Response) => {
@@ -77,32 +77,35 @@ api.get('/:uuid/product/:barcode', async (req: Request, res: Response) => {
     if (user) {
       let product: Product | undefined = await Product.findOne(barcode)
 
-      if (!product) { // If product does not exist (create it)
-        const response = await fetch(
-          `https://world.openfoodfacts.org/api/v0/product/${barcode}`
-        )
+      if (!product) {
+        // If product does not exist (create it)
+        const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}`)
         const data = await response.json()
 
-        if (data.status) { // If product exist on OpenFoodFact (adding on DB)
+        if (data.status) {
+          // If product exist on OpenFoodFact (adding on DB)
           const productInterface: ProductInterface = getProductInfoFromOpenFoodFact(data)
 
           const newProduct = setNewProduct(productInterface)
           await newProduct.save()
           product = newProduct
-        } else { // If product does not exist on OpenFoodFact
-          res.status(BAD_REQUEST.status).json({ 'err': 'Product does not exist' })
+        } else {
+          // If product does not exist on OpenFoodFact
+          res.status(BAD_REQUEST.status).json({ err: 'Product does not exist' })
         }
       }
       // Check if usersProduct of currents product and user exist / creat if it does not exist
       const usersProduct: UsersProducts | undefined = await getRepository(UsersProducts)
-        .createQueryBuilder("usersProducts")
-        .where("usersProducts.userId = :uuid", { uuid })
-        .andWhere("usersProducts.barcode = :barcode", { barcode })
+        .createQueryBuilder('usersProducts')
+        .where('usersProducts.userId = :uuid', { uuid })
+        .andWhere('usersProducts.barcode = :barcode', { barcode })
         .getOne()
 
-      if (usersProduct) { // If userProduct exist
+      if (usersProduct) {
+        // If userProduct exist
         res.status(CREATED.status).json(success(product))
-      } else { // If userProduct does not exist (create it)
+      } else {
+        // If userProduct does not exist (create it)
         const newUsersProducts = new UsersProducts()
 
         newUsersProducts.barcode = barcode
@@ -112,73 +115,12 @@ api.get('/:uuid/product/:barcode', async (req: Request, res: Response) => {
         res.status(CREATED.status).json(success(product))
       }
     } else {
-      res.status(BAD_REQUEST.status).json({ 'err': 'User does not exist' })
+      res.status(BAD_REQUEST.status).json({ err: 'User does not exist' })
     }
   } catch (err) {
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
-
-interface ProductInterface {
-  barcode: string,
-  product_name: string,
-  image_url: string,
-  brand: string,
-  isGluten: number
-}
-
-function getProductInfoFromOpenFoodFact(data: any): ProductInterface {
-  const newProduct: ProductInterface = {
-    barcode: data.code.toString(),
-    product_name: data.product.product_name || data.product.generic_name || 'Nom du produit inconnu',
-    image_url: data.product.image_url || null,
-    brand: data.product.brands || 'Marque iconnu',
-    isGluten: isGluten(data)
-  }
-
-  return newProduct
-}
-
-function isGluten(data: any): number {
-  let isGluten: number = 4 //(0: gluten-free, 1: traces, 2: with gluten, 4: unknow (default value))
-  const glutenIngredientsList = ['ble', 'wheat', 'grano']
-  const isFreeGlutenLabel: boolean = !!data.product.labels_tags.filter((label: string) => label.includes('gluten-free')).length
-  const isGlutenTracesTag: boolean = !!data.product.traces_tags.filter((label: string) => label.includes('gluten')).length
-  let isGlutenIngredientsText: boolean = false
-  let ingredientsText = data.product.ingredients_text_fr || data.product.ingredients_text_en || data.product.ingredients_text
-
-  ingredientsText = ingredientsText.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-  _.each(glutenIngredientsList, glutenIngredient => {
-    if (ingredientsText.includes(glutenIngredient)) {
-      isGlutenIngredientsText = true
-      return false
-    }
-  })
-
-  // GLUTEN LOGIC//
-
-  if (isFreeGlutenLabel && (!isGlutenTracesTag && !isGlutenIngredientsText)) {
-    isGluten = 0
-  } else if (isGlutenTracesTag && !isGlutenIngredientsText) {
-    isGluten = 1
-  } else if (isGlutenIngredientsText) {
-    isGluten = 2
-  }
-
-  return isGluten
-}
-
-function setNewProduct(productInterface: ProductInterface): Product {
-  const product = new Product()
-
-  product.barcode = productInterface.barcode
-  product.product_name = productInterface.product_name
-  product.image_url = productInterface.image_url
-  product.brand = productInterface.brand
-  product.isGluten = productInterface.isGluten
-
-  return product
-}
 
 api.get('/:uuid/users_products', async (req: Request, res: Response) => {
   const { uuid } = req.params
@@ -186,10 +128,10 @@ api.get('/:uuid/users_products', async (req: Request, res: Response) => {
     const user: User | undefined = await User.findOne(uuid)
     if (user) {
       const usersProducts: UsersProducts[] | undefined = await getRepository(UsersProducts)
-      .createQueryBuilder('up')
-      .leftJoinAndSelect('up.product', 'product')
-      .where('up.userId = :uuid', { uuid })
-      .getMany()
+        .createQueryBuilder('up')
+        .leftJoinAndSelect('up.product', 'product')
+        .where('up.userId = :uuid', { uuid })
+        .getMany()
 
       res.status(CREATED.status).json(success(usersProducts))
     }
