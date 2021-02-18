@@ -11,7 +11,7 @@ import { getRepository } from 'typeorm'
 
 const api = Router()
 
-interface NewProduct {
+interface ProductInterface {
   barcode: string,
   product_name: string,
   image_url: string,
@@ -22,28 +22,55 @@ interface NewProduct {
 api.get('/:barcode', async (req: Request, res: Response) => {
   try {
     const { barcode } = req.params
+    const { uuid } = req.body
 
-    let product: Product | undefined = await Product.findOne(barcode)
+    const product: Product | undefined = await Product.findOne(barcode)
 
-    if (product) {
-      res.status(CREATED.status).json(success(product))
+    if (product) { // If product exist
+      if (uuid) { // If user specified on body
+        try {
+          const user: User | undefined = await User.findOne(uuid)
 
-      //...
-    } else {
+          if (user) {
+            const userProduct: UsersProducts | undefined = await getRepository(UsersProducts)
+              .createQueryBuilder("usersProducts")
+              .where("usersProducts.userId = :uuid", { uuid })
+              .andWhere("usersProducts.barcode = :barcode", { barcode })
+              .getOne()
+
+            if (userProduct) { // If userProduct exist
+              res.status(CREATED.status).json(success(product))
+            } else { // If userProduct does not exist (create it)
+              const newUserProduct = new UsersProducts()
+
+              newUserProduct.barcode = barcode
+              newUserProduct.userId = uuid
+
+              await newUserProduct.save()
+              res.status(CREATED.status).json(success(product))
+            }
+          } else {
+            res.status(BAD_REQUEST.status).json({ 'err': 'Specified user does not exist' })
+          }
+        } catch (err) {
+          res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
+        }
+      } else { //If no user specified on body
+        res.status(CREATED.status).json(success(product))
+      }
+    } else { // If product does not exist (create it)
       const response = await fetch(
         `https://world.openfoodfacts.org/api/v0/product/${barcode}`
       )
       const data = await response.json()
 
-      if (data.status) {
-        const newProduct: NewProduct = getProductInfoFromOpenFoodFact(data)
+      if (data.status) { // If product exist on OpenFoodFact (adding on DB)
+        const productInterface: ProductInterface = getProductInfoFromOpenFoodFact(data)
 
-        product = setNewProduct(newProduct)
-        await product.save()
+        const newProduct = setNewProduct(productInterface)
+        await newProduct.save()
 
-        const { uuid } = req.body
-
-        if (uuid) {
+        if (uuid) { // If user specified on body
           try {
             const user: User | undefined = await User.findOne(uuid)
 
@@ -54,9 +81,9 @@ api.get('/:barcode', async (req: Request, res: Response) => {
                 .andWhere("usersProducts.barcode = :barcode", { barcode })
                 .getOne()
 
-              if (usersProduct) {
+              if (usersProduct) { // If userProduct exist
                 res.status(CREATED.status).json(success(product))
-              } else {
+              } else { // If userProduct does not exist (create it)
                 const newUsersProducts = new UsersProducts()
 
                 newUsersProducts.barcode = barcode
@@ -65,17 +92,16 @@ api.get('/:barcode', async (req: Request, res: Response) => {
                 await newUsersProducts.save()
                 res.status(CREATED.status).json(success(product))
               }
-            }
-            else {
-              res.status(BAD_REQUEST.status).json({ 'err': 'Specified user inexistant' })
+            } else {
+              res.status(BAD_REQUEST.status).json({ 'err': 'Specified user does not exist' })
             }
           } catch (err) {
             res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
           }
-        } else {
+        } else { // If no user specified on body
           res.status(CREATED.status).json(success(product))
         }
-      } else {
+      } else { // If product does not exist on OpenFoodFact
         res.status(BAD_REQUEST.status).json({ 'err': 'Product does not exist' })
       }
     }
@@ -85,8 +111,8 @@ api.get('/:barcode', async (req: Request, res: Response) => {
   }
 })
 
-function getProductInfoFromOpenFoodFact(data: any): NewProduct {
-  const newProduct: NewProduct = {
+function getProductInfoFromOpenFoodFact(data: any): ProductInterface {
+  const newProduct: ProductInterface = {
     barcode: data.code.toString(),
     product_name: data.product.product_name || data.product.generic_name || 'Nom du produit inconnu',
     image_url: data.product.image_url || null,
@@ -126,20 +152,17 @@ function isGluten(data: any): number {
   return isGluten
 }
 
-function setNewProduct(newProduct: NewProduct): Product {
+function setNewProduct(productInterface: ProductInterface): Product {
   const product = new Product()
 
-  product.barcode = newProduct.barcode
-  product.product_name = newProduct.product_name
-  product.image_url = newProduct.image_url
-  product.brand = newProduct.brand
-  product.isGluten = newProduct.isGluten
+  product.barcode = productInterface.barcode
+  product.product_name = productInterface.product_name
+  product.image_url = productInterface.image_url
+  product.brand = productInterface.brand
+  product.isGluten = productInterface.isGluten
 
   return product
 }
 
-function createNewUsersProduct() {
-
-}
 
 export default api
