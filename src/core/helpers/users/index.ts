@@ -1,5 +1,5 @@
 import Product from '@/core/db/models/Product'
-import _ from 'lodash'
+import _, { isEmpty } from 'lodash'
 
 export interface ProductInterface {
   barcode: string
@@ -12,24 +12,20 @@ export interface ProductInterface {
 function isGluten(data: any): number {
   let isGluten: number = 4 //(0: gluten-free, 1: traces, 2: with gluten, 4: unknow (default value))
   const glutenIngredientsList = ['ble', 'wheat', 'grano']
-  const isFreeGlutenLabel: boolean = !!data.product.labels_tags.filter((label: string) => label.includes('gluten-free'))
-    .length
-  const isGlutenTracesTag: boolean = !!data.product.traces_tags.filter((label: string) => label.includes('gluten'))
-    .length
+  const isFreeGlutenLabel: boolean = data.product.labels_tags && !!data.product.labels_tags.filter((label: string) => label.includes('gluten-free')).length
+  const isGlutenTracesTag: boolean = data.product.traces_tags && !!data.product.traces_tags.filter((label: string) => label.includes('gluten')).length
   let isGlutenIngredientsText: boolean = false
-  let ingredientsText =
-    data.product.ingredients_text_fr || data.product.ingredients_text_en || data.product.ingredients_text
+  let ingredientsText = data.product.ingredients_text_debug && data.product.ingredients_text_fr || data.product.ingredients_text_en || data.product.ingredients_text
 
-  ingredientsText = ingredientsText
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-  _.each(glutenIngredientsList, (glutenIngredient) => {
-    if (ingredientsText.includes(glutenIngredient)) {
-      isGlutenIngredientsText = true
-      return false
-    }
-  })
+  if (!isEmpty(ingredientsText)) {
+    ingredientsText = ingredientsText.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    _.each(glutenIngredientsList, glutenIngredient => {
+      if (ingredientsText.includes(glutenIngredient)) {
+        isGlutenIngredientsText = true
+        return false
+      }
+    })
+  }
 
   // GLUTEN LOGIC//
 
