@@ -23,15 +23,14 @@ export default class Database {
 
   public addFixtures(): void {
     addUsers()
-   
+
     setTimeout(async function () {
       addProducts()
-    }, 2000);
-    
+    }, 2000)
+
     setTimeout(async function () {
       addUsersProducts()
-    }, 3000);
-
+    }, 3000)
   }
 
   public async authenticate(): Promise<Connection | never | null> {
@@ -43,9 +42,8 @@ export default class Database {
     }
 
     const [, , username, password, host, port, database] = founded
-  
 
-    if(process.env.ENVIRONMENT === "DEV"){
+    if (process.env.ENVIRONMENT === 'DEV') {
       this._connection = await createConnection({
         type: 'postgres',
         host,
@@ -54,11 +52,11 @@ export default class Database {
         password,
         database,
         entities: [User, Product, UsersProducts],
-        dropSchema: true,
-        synchronize: true,
+        dropSchema: false,
+        synchronize: false,
         logging: false,
       })
-    }else{
+    } else {
       this._connection = await createConnection({
         type: 'postgres',
         host,
@@ -67,21 +65,19 @@ export default class Database {
         password,
         database,
         entities: [User, Product, UsersProducts],
-        dropSchema: true,
-        synchronize: true,
+        dropSchema: false,
+        synchronize: false,
         logging: false,
-        ssl:true,
+        ssl: true,
         extra: {
           ssl: {
-            rejectUnauthorized: false
-          }
-        }
+            rejectUnauthorized: false,
+          },
+        },
       })
     }
 
-   
-
     this.addFixtures()
-    return this._connection 
+    return this._connection
   }
 }
