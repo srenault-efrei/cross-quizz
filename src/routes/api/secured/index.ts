@@ -1,10 +1,10 @@
 import { Router } from 'express'
 import users from './users'
-import products from './product'
+import product from './product'
 
 const api = Router()
 
 api.use('/users', users)
-api.use('/products', products)
+api.use('/product', product)
 
 export default api

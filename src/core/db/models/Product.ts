@@ -15,17 +15,20 @@ export const bigint: ValueTransformer = {
 
 @Entity()
 export default class Product extends BaseEntity {
-  @PrimaryColumn('bigint', { transformer: [bigint] })
-  barCode!: number
+  @PrimaryColumn()
+  barcode!: string
 
   @Column({ nullable: false })
   product_name!: string
 
   @Column({ nullable: false })
-  image!: string
+  image_url!: string
 
   @Column({ nullable: false })
-  mark!: string
+  brand!: string
+
+  @Column({ nullable: false, default: 3 })
+  isGluten!: number
 
   @CreateDateColumn()
   createdAt!: string
