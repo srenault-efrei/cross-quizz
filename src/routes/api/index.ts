@@ -37,12 +37,13 @@ api.use('/', passport.authenticate('jwt', { session: false }), secured)
   
 ---------------- Users action on Products in Secured ----------------
 
-  /api/users/:uuid/products [POST] 
+  /api/users/:uuid/product [POST] (Product addition is via /api/product/:barcode route)
   /api/users/:uuid/products [GET] 
+  /api/users/:uuid/products [DELETE] 
 
 ---------------- Products in Secured ----------------
 
-  /api/product/:barcode [GET]
+  /api/product/:barcode [GET] (WIP)
 
 ----------------- ResetPassword no in Secured ------------
 

@@ -8,7 +8,7 @@ export default class UsersProducts extends BaseEntity {
   id!: number
 
   @Column({ nullable: false })
-  barcode!: number
+  barcode!: string
 
   @Column({ nullable: false })
   userId!: string

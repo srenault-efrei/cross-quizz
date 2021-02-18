@@ -4,12 +4,15 @@ import bcrypt from 'bcryptjs'
 import { error, success } from '../../../core/helpers/response'
 import { BAD_REQUEST, CREATED, OK } from '../../../core/constants/api'
 import Product from '../../../core/db/models/Product'
+import User from '../../../core/db/models/User'
+import UsersProducts from '../../../core/db/models/UsersProducts'
 import fetch from 'node-fetch'
+import { getRepository } from 'typeorm'
 
 const api = Router()
 
 interface NewProduct {
-  barcode: number,
+  barcode: string,
   product_name: string,
   image_url: string,
   brand: string,
@@ -24,6 +27,8 @@ api.get('/:barcode', async (req: Request, res: Response) => {
 
     if (product) {
       res.status(CREATED.status).json(success(product))
+
+      //...
     } else {
       const response = await fetch(
         `https://world.openfoodfacts.org/api/v0/product/${barcode}`
@@ -33,13 +38,42 @@ api.get('/:barcode', async (req: Request, res: Response) => {
       if (data.status) {
         const newProduct: NewProduct = getProductInfoFromOpenFoodFact(data)
 
-        product = createNewProduct(newProduct)
+        product = setNewProduct(newProduct)
         await product.save()
 
-        if (product) {
-          res.status(CREATED.status).json(success(product))
+        const { uuid } = req.body
+
+        if (uuid) {
+          try {
+            const user: User | undefined = await User.findOne(uuid)
+
+            if (user) {
+              const usersProduct: UsersProducts | undefined = await getRepository(UsersProducts)
+                .createQueryBuilder("usersProducts")
+                .where("usersProducts.userId = :uuid", { uuid })
+                .andWhere("usersProducts.barcode = :barcode", { barcode })
+                .getOne()
+
+              if (usersProduct) {
+                res.status(CREATED.status).json(success(product))
+              } else {
+                const newUsersProducts = new UsersProducts()
+
+                newUsersProducts.barcode = barcode
+                newUsersProducts.userId = uuid
+
+                await newUsersProducts.save()
+                res.status(CREATED.status).json(success(product))
+              }
+            }
+            else {
+              res.status(BAD_REQUEST.status).json({ 'err': 'Specified user inexistant' })
+            }
+          } catch (err) {
+            res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
+          }
         } else {
-          res.status(BAD_REQUEST.status).json({ 'err': 'Unable to create product in database' })
+          res.status(CREATED.status).json(success(product))
         }
       } else {
         res.status(BAD_REQUEST.status).json({ 'err': 'Product does not exist' })
@@ -53,7 +87,7 @@ api.get('/:barcode', async (req: Request, res: Response) => {
 
 function getProductInfoFromOpenFoodFact(data: any): NewProduct {
   const newProduct: NewProduct = {
-    barcode: data.code,
+    barcode: data.code.toString(),
     product_name: data.product.product_name || data.product.generic_name || 'Nom du produit inconnu',
     image_url: data.product.image_url || null,
     brand: data.product.brands || 'Marque iconnu',
@@ -92,7 +126,7 @@ function isGluten(data: any): number {
   return isGluten
 }
 
-function createNewProduct(newProduct: NewProduct): Product {
+function setNewProduct(newProduct: NewProduct): Product {
   const product = new Product()
 
   product.barcode = newProduct.barcode
@@ -102,6 +136,10 @@ function createNewProduct(newProduct: NewProduct): Product {
   product.isGluten = newProduct.isGluten
 
   return product
+}
+
+function createNewUsersProduct() {
+
 }
 
 export default api
