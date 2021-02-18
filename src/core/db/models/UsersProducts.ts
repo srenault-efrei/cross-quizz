@@ -22,7 +22,7 @@ export default class UsersProducts extends BaseEntity {
 
   @ManyToOne((type) => Product)
   @JoinColumn({ name: 'barcode', referencedColumnName: 'barcode' })
-  Product!: Product
+  product!: Product
 
   public toJSON(): Partial<UsersProducts> {
     const json: Partial<UsersProducts> = Object.assign({}, this)
