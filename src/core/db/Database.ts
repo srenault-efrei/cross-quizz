@@ -65,8 +65,8 @@ export default class Database {
         password,
         database,
         entities: [User, Product, UsersProducts],
-        dropSchema: false,
-        synchronize: false,
+        dropSchema: true,
+        synchronize: true,
         logging: false,
         ssl: true,
         extra: {
