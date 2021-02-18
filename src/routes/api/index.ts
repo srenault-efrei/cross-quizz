@@ -3,6 +3,7 @@ import auth from './authenticate'
 import secured from './secured'
 import passport from 'passport'
 import cors from 'cors'
+import resetPassword from './resetPassword'
 
 const api = Router()
 api.use(cors())
@@ -18,6 +19,7 @@ api.get('/', (req: Request, res: Response) => {
 })
 
 api.use('/authenticate', auth)
+api.use('/resetPassword', resetPassword)
 
 api.use('/', passport.authenticate('jwt', { session: false }), secured)
 

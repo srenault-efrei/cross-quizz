@@ -64,36 +64,7 @@ api.delete('/:uuid', async (req: Request, res: Response) => {
     res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
   }
 })
-
-api.put('/:email/resetPassword', async (req: Request, res: Response) => {
-  try {
-    const { email } = req.params
-
-    const password = generator.generate({
-      length: 10,
-      numbers: true,
-    })
-    const user = await User.findOne({ email })
-    if (user && password) {
-      const passwordHash = bcrypt.hashSync(password, User.SALT_ROUND)
-      if (!bcrypt.compareSync(password, user.password)) {
-        user.password = passwordHash
-        await user.save()
-        res.status(OK.status).json(success(user))
-        console.log('Nouveau mot de passe : ', password)
-      } else {
-        res.status(BAD_REQUEST.status).json({
-          err: 'mot de passe courant identique au nouveau mot de passe',
-        })
-      }
-    } else {
-      res.status(BAD_REQUEST.status).json({ err: 'user inexistant' })
-    }
-  } catch (err) {
-    res.status(BAD_REQUEST.status).json(error(BAD_REQUEST, err))
-  }
-})
-
+    
 // PRODUCT //////////
 
 api.get('/:uuid/products', async (req: Request, res: Response) => {

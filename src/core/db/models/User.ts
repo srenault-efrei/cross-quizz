@@ -33,7 +33,7 @@ export default class User extends BaseEntity {
   @Column({ nullable: false })
   lastname!: string
 
-  @Column({ nullable: false })
+  @Column({ nullable: false, unique: true })
   phone!: string
 
   @Column({ nullable: true })
