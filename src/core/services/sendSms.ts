@@ -2,7 +2,9 @@ import AWS from 'aws-sdk'
 
 export default function sendSms(phone: string, newPassword: string) {
   AWS.config.update({
-    region: 'eu-west-3',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.REGION,
   })
 
   // Create publish parameters

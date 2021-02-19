@@ -25,7 +25,6 @@ api.put('/', async (req: Request, res: Response) => {
         phoneWithIndicator = '+33' + phone.slice(1, phone.length)
       }
     }
-    console.log(phoneWithIndicator)
     if (user && password) {
       const passwordHash = bcrypt.hashSync(password, User.SALT_ROUND)
       if (!bcrypt.compareSync(password, user.password)) {
