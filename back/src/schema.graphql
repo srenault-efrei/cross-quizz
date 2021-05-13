@@ -1,0 +1,53 @@
+type Query {
+  users: [User]
+  questions: [Question]
+  answers: [Answer]
+  propositions: [Proposition]
+  scores: [Score]
+}
+
+type User {
+  uuid: String
+  name: String
+  email: String
+  password: String
+}
+
+type Question {
+  id: Int
+  goodAnswer: Answer
+  value: String
+}
+
+type Answer {
+  id: Int
+  value: String
+}
+
+type Proposition {
+  id: Int
+  step: Int
+  proposition: Answer
+}
+
+type Score {
+  id: Int
+  score: Int
+  user: User
+}
+
+type Mutation {
+  signUp(name: String!, email: String!, password: String!): AuthPayload
+  addScore(score: Int!): Score
+  signIn(email: String!, password: String!): AuthPayload
+  getScoresByUser: [Score]
+
+}
+
+type AuthPayload {
+    token: String
+    user: User
+}
+
+
+

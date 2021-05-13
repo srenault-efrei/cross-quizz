@@ -1,0 +1,6 @@
+{
+    "name": "VogueMerry",
+    "env": [
+        "DATABASE_URL"
+    ]
+}
