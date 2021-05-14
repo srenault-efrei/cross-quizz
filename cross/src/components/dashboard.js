@@ -22,7 +22,6 @@ const dashboard = (props) => {
             if (!data) {
                 props.navigation.navigate("SignIn")
             } else {
-                console.log(data)
             }
         }
         setDataStorage()
