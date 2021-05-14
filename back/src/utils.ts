@@ -6,7 +6,7 @@ export const getUser = (token) => {
         throw new Error('You should provide a token!');
     }
     const user: any = jwt.verify(token, process.env.JWT_SECRET as string, (err, decoded) => {
-        if (err) throw new Error('invalid token!')
+        if (err) throw new Error('Invalid token!')
         return decoded;
     })
 
